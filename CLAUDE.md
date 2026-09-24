@@ -9,3 +9,5 @@ Velocidade e qualidade vêm antes da quantidade de detalhes.
 - Nada de loops, texturas de pelo ou partículas espalhadas: são elas que cobrem partes do desenho e criam erros.
 - Uma rodada só: criar o arquivo, commit e push no mesmo comando Bash (heredoc).
 - Resposta curta: só o arquivo e, no máximo, uma frase.
+- Pose nova: use as peças de `pecas.defs` (cab, feliz, aberto, corpo, pata, braco, rabo). Monte com `{ cat pecas.defs; cat <<'X'; } > novo.svg` e escreva só os `<use>` com transform. Nunca redesenhe peças que já existem.
+- Não explique antes de agir; só depois, em uma frase.
