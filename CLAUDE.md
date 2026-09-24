@@ -16,3 +16,7 @@ Velocidade e qualidade vêm antes da quantidade de detalhes.
 
 - Nunca diga que algo é impossível antes de tentar. Só desista depois de falhar em todas as alternativas, inclusive as menores e as que parecem impossíveis.
 - Meça o tempo de cada tentativa e compare antes de concluir qualquer coisa.
+
+# Prioridade neste chat
+
+- Velocidade é a prioridade principal de toda resposta, sem perder qualidade. Meça o tempo de cada tarefa.
