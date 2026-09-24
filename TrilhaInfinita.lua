@@ -30,6 +30,7 @@
    C ............ Câmera (perseguição, longe, capô)
    Botão direito do mouse + arrastar: olhar em volta
    V ............ Trocar cor da caminhonete     P ............ Pausar
+   J ............ Painel de diagnóstico (mande um print se algo der errado)
    No ar: W/S inclinam para frente/trás e A/D giram.
 
   CONTROLES A PÉ
@@ -151,6 +152,7 @@ local State = {
 	camLookTimer = 0,
 	menuAngle = 0,
 	showHelp = false,
+	showDebug = false,
 	wasNight = false,
 }
 
@@ -1678,6 +1680,7 @@ do
 	UI.arrow = label({ Size = UDim2.fromOffset(40, 40), Position = UDim2.new(0.5, 0, 0, 46), AnchorPoint = Vector2.new(0.5, 0), Text = "▲", TextSize = 34, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.3, Parent = UI.hud })
 	UI.target = label({ Size = UDim2.new(1, 0, 0, 20), Position = UDim2.fromOffset(0, 86), Text = "", TextSize = 15, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.4, Parent = UI.hud })
 
+	UI.debug = label({ Size = UDim2.fromOffset(520, 200), Position = UDim2.fromOffset(16, 220), Text = "", TextSize = 13, Font = Enum.Font.Code, TextYAlignment = Enum.TextYAlignment.Top, TextStrokeTransparency = 0.3, Visible = false, Parent = UI.hud })
 	UI.prompt = label({ Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0, 0, 1, -70), Text = "", TextSize = 20, TextXAlignment = Enum.TextXAlignment.Center, TextStrokeTransparency = 0.3, Parent = UI.hud })
 	UI.notify = label({ Size = UDim2.new(1, 0, 0, 40), Position = UDim2.new(0, 0, 0.3, 0), Text = "", TextSize = 30, Font = Enum.Font.GothamBlack, TextXAlignment = Enum.TextXAlignment.Center, TextTransparency = 1, TextStrokeTransparency = 1, ZIndex = 5, Parent = gui })
 
@@ -1828,6 +1831,62 @@ do
 		end
 	end
 
+	-- O personagem é SOLDADO na caminhonete (sem massa e sem colisão), virando parte
+	-- dela. Nunca fica ancorado dentro dela: uma peça ancorada dentro do carro trava a
+	-- física e faz o carro afundar no chão.
+	local saved = {}
+	function Driver.attach()
+		local hrp, humanoid = Driver.parts()
+		local char = player.Character
+		if not hrp or not char or not Truck.chassis then
+			return
+		end
+		Driver.detach()
+		hrp.Anchored = false
+		for _, d in ipairs(char:GetDescendants()) do
+			if d:IsA("BasePart") then
+				saved[d] = { massless = d.Massless, collide = d.CanCollide }
+				d.Massless = true
+				d.CanCollide = false
+			end
+		end
+		if humanoid then
+			humanoid.PlatformStand = true
+		end
+		hrp.CFrame = Truck.chassis.CFrame * CFrame.new(-1.4, 2.8, -1.6)
+		hrp.AssemblyLinearVelocity = Truck.chassis.AssemblyLinearVelocity
+		Driver.seatWeld = new("WeldConstraint", { Name = "SoldaMotorista", Part0 = Truck.chassis, Part1 = hrp, Parent = Truck.chassis })
+		Driver.setHidden(true)
+	end
+
+	function Driver.detach()
+		if Driver.seatWeld then
+			Driver.seatWeld:Destroy()
+			Driver.seatWeld = nil
+		end
+		for p, info in pairs(saved) do
+			if p.Parent then
+				p.Massless = info.massless
+				p.CanCollide = info.collide
+			end
+		end
+		table.clear(saved)
+		local _, humanoid = Driver.parts()
+		if humanoid then
+			humanoid.PlatformStand = false
+		end
+	end
+
+	-- No menu o personagem fica parado ao lado da caminhonete (sem cair no vazio)
+	function Driver.park()
+		local hrp = Driver.parts()
+		if hrp and Truck.chassis then
+			Driver.detach()
+			hrp.CFrame = Truck.chassis.CFrame * CFrame.new(-7, 1, 0)
+			hrp.Anchored = true
+		end
+	end
+
 	function Driver.enter()
 		local hrp = Driver.parts()
 		if not hrp then
@@ -1837,7 +1896,7 @@ do
 			Driver.drop(false)
 		end
 		State.driving = true
-		hrp.Anchored = true
+		Driver.attach()
 		Driver.setControls(false)
 		camera.CameraType = Enum.CameraType.Scriptable
 		Game.resetCamera()
@@ -1853,6 +1912,7 @@ do
 		local side = (cf * CFrame.new(-6, 0, -2)).Position
 		local hit = workspace:Raycast(side + Vector3.new(0, 20, 0), Vector3.new(0, -60, 0), Truck.rayParams)
 		local y = hit and hit.Position.Y + 3 or side.Y + 3
+		Driver.detach()
 		hrp.Anchored = false
 		hrp.CFrame = CFrame.lookAt(Vector3.new(side.X, y, side.Z), Vector3.new(side.X, y, side.Z) + Vector3.new(cf.LookVector.X, 0, cf.LookVector.Z))
 		hrp.AssemblyLinearVelocity = Vector3.zero
@@ -1947,11 +2007,16 @@ do
 			humanoid.JumpHeight = 7.2
 		end
 		local hrp = char:WaitForChild("HumanoidRootPart", 10)
+		if State.gameState == "loading" and hrp and hrp:IsA("BasePart") then
+			hrp.Anchored = true -- espera o mundo ficar pronto sem cair no vazio
+		end
 		if State.gameState ~= "loading" and Truck.chassis and hrp and hrp:IsA("BasePart") then
 			-- Renasceu: volta para perto da caminhonete
 			task.wait()
 			if State.driving then
-				hrp.Anchored = true
+				Driver.attach()
+			elseif State.gameState == "menu" then
+				Driver.park()
 			else
 				local pos = (Truck.chassis.CFrame * CFrame.new(-6, 4, 0)).Position
 				hrp.CFrame = CFrame.new(pos)
@@ -2188,6 +2253,21 @@ local function updateHUD()
 	UI.arrow.Rotation = math.deg(rel)
 	UI.target.Text = ("POSTO %d  •  %d m"):format(nextK, math.floor(toTarget.Magnitude * 0.28))
 
+	-- Diagnóstico (tecla J)
+	UI.debug.Visible = State.showDebug == true
+	if State.showDebug then
+		local hrpD = Driver.parts()
+		local lines = {
+			("massa %.0f  gravidade %.0f  ancorado %s  rodas no chão %d"):format(chassis.AssemblyMass, workspace.Gravity, tostring(chassis.Anchored), Truck.grounded or 0),
+			("vel %.1f  marcha %s  acel %.2f  freio %.2f  direção %.2f"):format(vel.Magnitude, tostring(Truck.gear), Truck.throttle, Truck.brake, Truck.steer),
+			("motorista soldado %s  personagem ancorado %s"):format(tostring(Driver.seatWeld ~= nil), tostring(hrpD and hrpD.Anchored)),
+		}
+		for i, w in ipairs(Truck.wheels) do
+			table.insert(lines, ("roda %d: no chão %s  compressão %.2f  carga %.0f  escorrega %.2f  %s"):format(i, tostring(w.grounded), w.compression, w.load, w.slip, w.hitPart and w.hitPart.Name or "-"))
+		end
+		UI.debug.Text = table.concat(lines, "\n")
+	end
+
 	-- Dicas na tela
 	local hrp = Driver.parts()
 	if State.driving then
@@ -2282,6 +2362,7 @@ function Game.toMenu()
 	if Truck.chassis then
 		Truck.chassis.Anchored = true
 	end
+	Driver.park()
 	UI.menuStats.Text = ("PONTOS: %d\nDISTÂNCIA: %d m   ENTREGAS: %d"):format(State.score, math.floor(State.bestZ * 0.28), State.delivered)
 end
 
@@ -2292,6 +2373,10 @@ function Game.play()
 	UI.menu.Visible = false
 	State.showHelp = false
 	State.gameState = "playing"
+	local hrp = Driver.parts()
+	if hrp then
+		hrp.Anchored = false
+	end
 	Truck.chassis.Anchored = false
 	Driver.enter()
 	Game.notify("SIGA A TRILHA ATÉ O PRÓXIMO POSTO!")
@@ -2420,6 +2505,10 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if State.gameState ~= "playing" then
 		return
 	end
+	if key == Enum.KeyCode.J then
+		State.showDebug = not State.showDebug
+		return
+	end
 	if key == Enum.KeyCode.F or key == Enum.KeyCode.ButtonY then
 		toggleVehicle()
 	elseif State.driving then
@@ -2519,11 +2608,10 @@ local function render(dt)
 		updateMenuCamera(dt)
 	elseif gs == "playing" then
 		if State.driving then
-			if hrp then
-				hrp.CFrame = chassis.CFrame * CFrame.new(-1.4, 2.8, -1.6)
-				hrp.AssemblyLinearVelocity = Vector3.zero
-				Driver.setHidden(true)
+			if hrp and not Driver.seatWeld then
+				Driver.attach()
 			end
+			Driver.setHidden(true)
 			updateDriveCamera(dt)
 			UserInputService.MouseBehavior = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and Enum.MouseBehavior.LockCurrentPosition or Enum.MouseBehavior.Default
 		end
