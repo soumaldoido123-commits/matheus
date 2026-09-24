@@ -11,3 +11,8 @@ Velocidade e qualidade vêm antes da quantidade de detalhes.
 - Resposta curta: só o arquivo e, no máximo, uma frase.
 - Pose nova: use as peças de `pecas.defs` (cab, feliz, aberto, corpo, pata, braco, rabo). Monte com `{ cat pecas.defs; cat <<'X'; } > novo.svg` e escreva só os `<use>` com transform. Nunca redesenhe peças que já existem.
 - Não explique antes de agir; só depois, em uma frase.
+
+# Persistência
+
+- Nunca diga que algo é impossível antes de tentar. Só desista depois de falhar em todas as alternativas, inclusive as menores e as que parecem impossíveis.
+- Meça o tempo de cada tentativa e compare antes de concluir qualquer coisa.
