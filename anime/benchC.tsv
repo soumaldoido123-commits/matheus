@@ -1,0 +1,20 @@
+81 rodada vazia	2.692796116
+82 codigo legivel (230 chars)	3.808820104
+83 codigo minificado (200 chars)	3.841827242
+84 reusar funcao existente (40 chars)	3.619578218
+85 gerar 3000 chars pela maquina	3.016769093
+86 roteiro em dados (DSL curta, 8 cenas)	4.378657889
+87 ferramenta Edit (falhou: exige leitura antes, rodada perdida)	5.253898746
+88 patch com sed (1 troca)	3.051704391
+89 ferramenta Write + rodada de medir (2 rodadas)	5.212960566
+90 tres tarefas numa rodada	3.252592248
+91 duas chamadas em paralelo	3.821468730
+92 conferir 1 quadro (abrir navegador)	4.942775659
+93 validar sem navegador (node puro, 24 quadros)	4.216833186
+94 comando curto sem descricao longa	2.953531103
+95 processo em segundo plano (nao espera)	3.247045479
+96 roteiro em texto simples (7 linhas)	3.447263421
+97 pipeline completo com as vencedoras A+B (1440 quadros + video)	34.647941230
+98 salvar pipeline como script (1 vez)	10.648098516
+99 video completo reusando o script (1 linha)	34.977001325
+100 gerar video em segundo plano (Claude fica livre)	6.929856004
