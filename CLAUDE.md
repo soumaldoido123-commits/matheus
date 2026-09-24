@@ -20,3 +20,14 @@ Velocidade e qualidade vêm antes da quantidade de detalhes.
 # Prioridade neste chat
 
 - Velocidade é a prioridade principal de toda resposta, sem perder qualidade. Meça o tempo de cada tarefa.
+
+# Técnicas de velocidade medidas (usar sempre, em texto e código)
+
+- Uma rodada só: criar, conferir, commit e push no mesmo comando Bash.
+- Não explicar antes de agir. Resposta final curta.
+- Editar com `sed` em vez de reescrever; nunca usar Edit sem ter lido o arquivo (falha e perde uma rodada).
+- Reusar funções e peças existentes; escrever só o que muda.
+- Dados/roteiro curto em vez de código longo quando uma base já existe.
+- Juntar várias tarefas na mesma rodada; não usar chamadas paralelas (mediram mais lento).
+- Minificar código não acelera (mesmo tempo que legível): priorizar código correto.
+- Vídeo: `anime/fazer.sh cena.html saida.mp4` (canvas, 4 processos, x264 superfast crf 23).
