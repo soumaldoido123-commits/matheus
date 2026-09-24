@@ -1,25 +1,16 @@
-# TITAN X-9: Cidade em Ruínas
+# Jogos de Roblox em um único script
 
-Jogo completo de Roblox em **um único script** (`RoboTitan.lua`): robôs gigantes numa cidade
-inteira destrutível, com lojas que dá para entrar, trânsito, ciclo de dia e noite, cinco tipos
-de inimigo e uma Nave-Mãe como chefe.
+Cada arquivo é um jogo completo. Para jogar: no Roblox Studio, crie um jogo **Baseplate**,
+adicione um **LocalScript** em **StarterPlayer → StarterPlayerScripts**, cole o código e aperte **Play**.
 
-## Como jogar
-1. No Roblox Studio, crie um jogo novo do tipo **Baseplate**.
-2. Em **StarterPlayer → StarterPlayerScripts**, adicione um **LocalScript**.
-3. Apague o conteúdo e cole o código inteiro de `RoboTitan.lua`.
-4. Aperte **Play (F5)**, escolha o robô na garagem e depois **Modo Missão** ou **Modo Livre**.
+## TrilhaInfinita.lua — Trilha Infinita 4x4
+Caminhonete off-road com física de suspensão realista (mola e amortecedor por roda,
+escorregamento de pneu, transferência de peso, câmbio automático de 6 marchas, 4x4,
+freio de mão) num mapa infinito gerado com terreno. A cada trecho aparece um desafio
+(troncos, pedras, lama, subida, ponte estreita, rio, rampa, gangorra, encosta, toras soltas).
+Desça da caminhonete, pegue cargas com física, coloque na caçamba e entregue no próximo posto.
 
-## Robôs
-| Robô | Estilo | Arma principal |
-|---|---|---|
-| TITAN X-9 | Equilibrado, voa | Laser |
-| GOLIAS MK-II | Tanque pesado, 4 mísseis, não voa | Canhão de plasma explosivo |
-| FALCÃO | Caça veloz, voo barato | Metralhadora rotativa |
-| BERSERKER | Corpo a corpo, soco com investida | Lança-chamas |
+## RoboTitan.lua — TITAN X-9: Cidade em Ruínas
+Robôs gigantes numa cidade destrutível, com inimigos, ondas e chefão.
 
-## Inimigos
-Drones, helicópteros de ataque, tanques que andam pelas ruas, robôs inimigos e a Nave-Mãe
-(a cada 5 ondas, chama reforços).
-
-Os controles estão no começo do script e no jogo (tecla **H**).
+Os controles estão no começo de cada script.
