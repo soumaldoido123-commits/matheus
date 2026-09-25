@@ -50,6 +50,33 @@ O sushi (`04_sushi.md`) ficou ruim e o aquário ficou bom. Olhando os quadros:
   entrada diferente, jeito diferente de se locomover, ação central diferente e final diferente.
   O que se mantém são os princípios (energia, física, câmera colada, linhas de velocidade), não a sequência.
 
+## Qualidade visual (lições do "prompt do gato")
+
+O usuário mandou prompts de outra personagem (Cissia) que geram uma qualidade de imagem muito alta; o melhor é o
+"prompt do gato" (Cissia vs. gato gigante num campo de batalha com nave em chamas). O que eles fazem:
+
+- **Estrutura em seções:** 一 atributos e travas → 二 eixo espacial → 三 roteiro de cores e luz → 四 regras de destruição
+  → 五 ambiente sonoro → 六 cortes com minutagem → 七 regras de física. Ver `prompts/08_peixaria_v2.md`.
+- **Composição em três camadas em todo corte:** 前景 / 中景 / 背景, cada uma dizendo se está 對焦銳利 ou 失焦.
+  Sempre um objeto em primeiro plano tapando parte do quadro (gera profundidade de cinema).
+- **Rack focus e foco explícito:** "由虛轉實", a câmera muda o foco dentro do plano.
+- **Eixo de 180° travado:** esquerda sempre é um lado, direita o outro; o antagonista sempre entra do mesmo lado.
+- **Roteiro de cores:** paleta complementar nomeada (frio × quente), cores de destaque específicas, contraluz
+  que recorta a silhueta, luz volumétrica em névoa (丁達爾光), partículas que pegam a luz.
+- **Cel-shaded 3D + efeitos 2D de anime** por cima (linhas de vento, anéis de impacto, fumaça 2D colorida).
+- **Perspectiva extrema:** algo gigante em primeiro plano, câmera rente ao chão ou vista de drone.
+- **Cortes de 3 segundos**, cada um com UMA ação clara. 15 s = 5 cortes; 30 s = 10 cortes.
+- **Trava dos elementos longos:** contar quantos existem (cauda 1 + antena 1 + lenço vermelho 1 + cabelo) e exigir
+  que apareçam iguais em todo quadro, com física de mola.
+- **Som por corte** + ambiente sonoro contínuo, sem som eletrônico, com hierarquia de volume.
+
+**Destruição mais interessante** (usar em todo impacto): quadro de impacto (1–2 quadros em silhueta de alto contraste),
+hit-stop de 3 quadros, anel de choque 2D no chão, destroços em três camadas de velocidade (grandes lentos, médios, pequenos rápidos),
+câmera lenta de 0,5 s e volta brusca, reação em cadeia (uma coisa derruba a outra), destroços pegando a luz,
+e resto de destruição continuando a cair depois do impacto.
+
+A energia da Kaya (corpo solto, linhas de velocidade, nunca parada) continua valendo dentro dessa estrutura.
+
 ## Como usar a referência (vídeo ou imagem)
 
 Pedir para copiar **a personagem** e **a qualidade de produção**, nunca o cenário, o enquadramento ou a história da referência.
