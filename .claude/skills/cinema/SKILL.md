@@ -61,33 +61,33 @@ Sempre que criar ou atualizar um prompt, cole o prompt final INTEIRO na resposta
 bloco de código, para o usuário copiar. Nada de texto dentro do bloco além do próprio prompt. Comentários, se
 houver, vêm depois do bloco e bem curtos.
 
-## Estilo de movimento, expressão e linhas (sempre incluir)
+## Formato obrigatório dos prompts da Cissia (versão que PASSA no gerador)
 
-Vem da análise do vídeo de referência do usuário (`prompts/analise-video-referencia.md`). Todo prompt da Cissia
-traz, em chinês, os blocos 【動作語言】 e 【表情語言】 na seção 五, e as regras de漫符/動態線, visão do objeto
-e 寶物光 na seção 八. O modelo pronto está em `prompts/cissia-entrega-30s.md`. Em cada ACT, use no máximo um
-efeito de linha, colocado no momento emocional mais forte.
+Modelo de referência: `prompts/cissia-entrega-30s-v2.md`. O formato antigo (seções 一 a 十) foi bloqueado por
+direitos autorais. Siga exatamente o formato dos prompts do usuário que passaram:
 
-## Formato obrigatório dos prompts da Cissia (padrão do usuário)
+- Blocos, nesta ordem: 【語言鐵則】 → 【風格】 → 【一句話引擎】 → 【參考與功能】 → 【場景・光】 → 【道具帳本】 →
+  【表演核心】 → linha ───── → CUTs `【início–fim s｜CUT n・título】` → linha ───── → 【約束】 → 【NEGATIVE】.
+- 【語言鐵則】: falas só em inglês; legendas só em japonês, estilo UI de《絕區零》, cinza-claro, 50% de transparência,
+  embaixo; nenhum caractere chinês, texto ou número na tela.
+- 【風格】: descreva o estilo por conta própria («賽璐璐渲染的3D動畫短片，畫面乾淨明亮，動作自然、讀取清楚，像官方的動畫短片»).
+  NUNCA mande copiar ou seguir a qualidade, o estilo, o movimento ou a física do vídeo de referência.
+- 【參考與功能】: «<<<video_1>>>＝Cissia。臉、髮型、服裝、尾巴設計只來自 <<<video_1>>>，文字不重新描述她的外貌。
+  不使用 <<<video_1>>> 的背景、場景與其他人物。全片只有一個Cissia。» NUNCA descreva a aparência dela: cor de olho,
+  pupila, cabelo, dentes, cor da cauda, traje, N.E.P.S. ou nome do jogo. Personagens sem referência ganham 3 traços
+  simples e «全片只有一個X».
+- Proibido: mundo voxel ou de blocos (parece Minecraft), personagens ou mundos de jogos, texto ou números nos objetos
+  (use desenhos e ícones), superlativos como 頂級/極致/院線級.
+- Cada CUT: uma frase de câmera; ação com preparo, ação e volta; fala no formato
+  `Language: English. She says, <estado da voz e ação que corta a fala>: {"..."}` + `日本語字幕【...】` +
+  «說完嘴巴閉上…»; efeitos entre `< >`; música entre `( )`.
+- Sempre: 雙馬尾2束加蛇尾1條恆為3件；尾巴有重量、不穿模；眼睛只有正常的反光點；口水、液體依重力落下；
+  final com corte seco no mesmo quadro.
+- 【NEGATIVE】: «no animal ears, no squirrel cheeks; no glowing eyes, no spirals or rings in eyes; no floating objects; no text or numbers on screen».
+- Tamanho: por volta de 3.000 a 4.000 caracteres chineses. Prompt curto e concreto passa; prompt longo cheio de regras não.
 
-O modelo de referência é `prompts/cissia-mosquito-30s-padrao.md`. Todo prompt novo da Cissia segue esse modelo:
-- **O prompt inteiro em chinês tradicional; só as falas entre aspas em inglês.** Nenhuma palavra em português
-  dentro do prompt (notas em português ficam fora do bloco, na mensagem para o usuário).
-- **Autossuficiente:** o prompt traz todas as regras dentro dele, sem "cole a Bíblia antes".
-- **30 segundos, 6 ACTs de 5s**, cada um com o cabeçalho `ACT n【início-fim s】título｜lugar・ângulo・lente em mm`,
-  seguido de `構圖三層` (前景／中景／背景), `動態演繹與聽感`, `對白與口型` (quando houver) e `本幕音效（SFX）`.
-- **Seções fixas, nesta ordem:** parágrafo de abertura → título → 一、母體屬性與核心約束 → 二、空間幾何座標與背景阻擋鎖
-  → 三、聲音、底噪與畫幅 → 四、【關於對白方向的絕對規則】 → 五、【角色與表演母體】 → 六、30秒・6鏡頭精確分解 →
-  七、【動作與表情規則】 → 八、【攝影與質感】 → 九、【連續性鎖定】 → 十、視覺與物理防錯.
-- **Ficha da Cissia (NUNCA descrever a aparência dela; se descrever, o gerador bloqueia):** use só o bloco
-  「@[Video 1](video_1)＝Cissia。外觀、服裝、髮型與尾巴設計只來自 @[Video 1](video_1)，文字不重新描述她的外貌。
-  不使用 @[Video 1](video_1) 的背景、場景、燈光與其他人物。全片只有一個 Cissia。」
-  Não escreva cor de olho, pupila em cruz, cabelo loiro, dentes de tubarão, cor da cauda, N.E.P.S. nem nome de
-  personagem ou lugar de jogo. Pode dizer "雙馬尾 2 束加蛇尾 1 條，恆為 3 件長條元素" e descrever o comportamento
-  da cauda. Os olhos são "只有正常的反光點". Termine sempre com o bloco
-  `【NEGATIVE】 no animal ears, no squirrel cheeks; no glowing eyes, no spirals or rings in eyes; no floating objects; no Chinese characters anywhere on screen`.
-- **Regras que entram sempre:** cada fala é subproduto do corpo, cortada por ação, respiração ou impacto, e anotada
-  com o momento e o estado da voz; energia de corpo inteiro, com preparo → ação → overshoot → volta; mãos não
-  voltam direto ao corpo; nada de tremer ou girar sem motivo; contato físico com reação visível; bloqueio de
-  continuidade (quantidade de objetos e o caminho de cada objeto); lista de elementos de outros vídeos proibidos;
-  nada de legenda, piscada para a câmera ou pose de vitória; final abrupto que corta para o preto sem congelar.
+## Estilo de movimento e expressão (sempre incluir, dentro de 【表演核心】)
+
+Vem de `prompts/analise-video-referencia.md`: poses teatrais com balé e patinação, andar de ladra na ponta dos pés,
+cauda em grandes arcos em S que chega meio tempo depois do corpo, sorriso de lado com uma presinha aparecendo,
+susto com o cabelo eriçado, ponto de vista de dentro de um objeto e comida que brilha como tesouro.
