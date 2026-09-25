@@ -14,6 +14,8 @@ Confirme com o usuário (pergunte só o que faltar):
 1. **A ideia:** o que acontece, e o sentimento que ele quer passar.
 2. **A ferramenta:** Sora, Veo, Runway, Kling, Suno, Udio, Midjourney ou outra.
 3. **Duração e formato:** tempo total, vertical ou horizontal, com ou sem falas, com ou sem música.
+   **Padrão do usuário: prompt completo = cena de 30 segundos** (cerca de 6 planos, em 3 atos). Só faça
+   menos se ele pedir. Entregue também como dividir em tomadas de 5s ou 10s.
 
 ## Rodada 1: propostas (em paralelo)
 
