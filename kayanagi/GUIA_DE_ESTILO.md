@@ -3,6 +3,33 @@
 Referência para criar cenas novas da Kayanagi no mesmo nível dos prompts em `prompts/`.
 Os prompts são escritos em **chinês tradicional**; só as falas (entre aspas) são em **inglês**.
 
+- `prompts/02_aquario.md` é o **original**: dele vem a energia (a ação física exagerada, o jeito dela se mexer).
+- `prompts/03_minecraft.md` é o **padrão de qualidade**: toda cena nova deve ter a estrutura dele.
+
+## Por que o Minecraft é superior (a receita)
+
+O aquário tem energia, mas é uma sequência de ações. O Minecraft tem energia **e** uma história de 30 segundos:
+
+1. **Motivação clara:** a ganância dela move cada ação.
+2. **Um mundo com regras próprias** e um contraste visual com ela (voxel × render 3D de alta qualidade).
+3. **Uma regra quebrada:** ela toca no que não devia e o mundo muda (congela).
+4. **Um antagonista silencioso** que não precisa falar (Herobrine).
+5. **Consequência física e absurda:** erguida pela mochila, o chão apagado, a queda para fora do mundo.
+6. **Arco de luz:** quente → frio e invasivo → neutro. A luz conta a história junto com ela.
+7. **Arco emocional:** ganância → curiosidade → medo (no corpo antes da boca) → blefe → pânico → alívio → teimosia.
+8. **Plantar e pagar:** a esmeralda escondida no bolso volta no final.
+9. **Ficha técnica por plano:** tempo em segundos, lente (24mm, 85mm, 100mm), ângulo, ação quadro a quadro, fala com instrução de como ela é cortada.
+10. **Som como ação:** vozes esticadas e cortadas, estática, o mundo ficando distante.
+
+## Como usar a referência (vídeo ou imagem)
+
+Pedir para copiar **a personagem** e **a qualidade de produção**, nunca o cenário, o enquadramento ou a história da referência.
+Este parágrafo abre toda cena nova:
+
+```
+參考素材的使用方式：提供的角色圖是角色外觀的唯一來源，角色必須完整複製。提供的參考影片只用來複製「製作品質」：渲染精度、材質與紋理細節、布料與頭髮的物理、光影層次、景深、粒子與特效的精緻度、動畫流暢度與表演強度。不要複製參考影片的場景、構圖、鏡頭順序或劇情；本片的場景、鏡頭與動作全部依照以下描述重新創作，但必須達到與參考相同或更高的製作品質。
+```
+
 ## Quem ela é
 
 - **Nome:** Kayanagi (渦耶凪, "redemoinho e calmaria"). Apelido **Kaya**, codinome **Nagi** na Shark Unit.
