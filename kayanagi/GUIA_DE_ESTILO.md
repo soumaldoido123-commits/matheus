@@ -37,6 +37,12 @@ O sushi (`04_sushi.md`) ficou ruim e o aquário ficou bom. Olhando os quadros:
 - **Poucas ações grandes > muitas piadas pequenas.** O sushi tinha umas 25 mini piadas (chá, molho, pilha de pratos, placa...)
   e virou 27 cortes curtos sem nenhuma ação completa. O aquário tem ~6 ações físicas grandes, cada uma com tempo.
 - **Plano aberto mata a energia.** No sushi ela aparece pequena, longe. No aquário a câmera está colada nela.
+- **O congelador (`05`) funcionou bem; o Uber (`06`) ficou fraco.** No congelador faltaram só duas coisas:
+  mais linhas de velocidade quando ela corre e o corpo mais "solto".
+- **Corpo solto:** escrever explicitamente que ela é elástica, como se não tivesse ossos, com cabeça, ombros e
+  braços chicoteando e voltando (como no aquário, quando ela mergulha no lixo com as pernas chutando no ar).
+- **Corrida = tela cheia de linhas de velocidade:** pernas em borrão, braços em redemoinho, fundo esticado em linhas,
+  várias camadas de rastro. Pedir "muitas, bem visíveis, exageradas".
 - **Linhas de velocidade nos braços são a assinatura.** Precisam estar lá, em mais de um momento.
 - **Rosto de anime exagerado funciona:** bochecha estufada, boca maior que o rosto, olhos de estrela.
 - **O prompt em prosa (estilo aquário) gerou resultado melhor** que o formato em lista com minutagem.
