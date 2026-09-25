@@ -54,3 +54,23 @@ Em português, curto e direto:
 5. **Decisões principais**: 3 a 5 linhas dizendo o que a equipe mudou em relação à ideia original e por quê.
 
 Não despeje as propostas inteiras dos 13 agentes na resposta. O usuário quer o resultado, não a reunião.
+
+## Formato obrigatório dos prompts da Cissia (padrão do usuário)
+
+O modelo de referência é `prompts/cissia-mosquito-30s-padrao.md`. Todo prompt novo da Cissia segue esse modelo:
+- **O prompt inteiro em chinês tradicional; só as falas entre aspas em inglês.** Nenhuma palavra em português
+  dentro do prompt (notas em português ficam fora do bloco, na mensagem para o usuário).
+- **Autossuficiente:** o prompt traz todas as regras dentro dele, sem "cole a Bíblia antes".
+- **30 segundos, 6 ACTs de 5s**, cada um com o cabeçalho `ACT n【início-fim s】título｜lugar・ângulo・lente em mm`,
+  seguido de `構圖三層` (前景／中景／背景), `動態演繹與聽感`, `對白與口型` (quando houver) e `本幕音效（SFX）`.
+- **Seções fixas, nesta ordem:** parágrafo de abertura → título → 一、母體屬性與核心約束 → 二、空間幾何座標與背景阻擋鎖
+  → 三、聲音、底噪與畫幅 → 四、【關於對白方向的絕對規則】 → 五、【角色與表演母體】 → 六、30秒・6鏡頭精確分解 →
+  七、【動作與表情規則】 → 八、【攝影與質感】 → 九、【連續性鎖定】 → 十、視覺與物理防錯.
+- **Ficha da Cissia (fixa):** <<<video_1>>> como única referência; rosto, **pupila com cruz vermelha**, maria-chiquinhas
+  loiras (2), **uma única cauda de cobra branca** (1), dentes de tubarão, traje N.E.P.S. (salvo figurino da cena);
+  【特別禁止獸耳與松鼠臉】; sempre 3 elementos longos.
+- **Regras que entram sempre:** cada fala é subproduto do corpo, cortada por ação, respiração ou impacto, e anotada
+  com o momento e o estado da voz; energia de corpo inteiro, com preparo → ação → overshoot → volta; mãos não
+  voltam direto ao corpo; nada de tremer ou girar sem motivo; contato físico com reação visível; bloqueio de
+  continuidade (quantidade de objetos e o caminho de cada objeto); lista de elementos de outros vídeos proibidos;
+  nada de legenda, piscada para a câmera ou pose de vitória; final abrupto que corta para o preto sem congelar.
