@@ -27,7 +27,10 @@ O aquário tem energia, mas é uma sequência de ações. O Minecraft tem energi
 
 O sushi (`04_sushi.md`) ficou ruim e o aquário ficou bom. Olhando os quadros:
 
-- **Ela sentada = cena morta.** No sushi ela passa a maior parte sentada no balcão comendo, depois sentada no prato.
+- **Toda ideia do usuário tem essa energia, mesmo as que parecem calmas** (andar de carro, esperar, sentar).
+  Não recusar nem trocar a ideia: se ela precisa ficar sentada, o corpo dela continua em movimento
+  (pernas tremendo em borrão, cauda batendo no teto, cor do rosto mudando, reação física a cada solavanco).
+- **Ela sentada e quieta = cena morta.** No sushi ela passa a maior parte sentada no balcão comendo, depois sentada no prato.
   O aquário não tem nenhum momento sentado.
 - **Ela tem que fazer a ação, não sofrer a ação.** No sushi quem age é o chef e a esteira; ela é carregada.
   No aquário ela corre, mergulha, enfia a cabeça, puxa. O mundo só reage.
