@@ -79,9 +79,13 @@ O modelo de referência é `prompts/cissia-mosquito-30s-padrao.md`. Todo prompt 
 - **Seções fixas, nesta ordem:** parágrafo de abertura → título → 一、母體屬性與核心約束 → 二、空間幾何座標與背景阻擋鎖
   → 三、聲音、底噪與畫幅 → 四、【關於對白方向的絕對規則】 → 五、【角色與表演母體】 → 六、30秒・6鏡頭精確分解 →
   七、【動作與表情規則】 → 八、【攝影與質感】 → 九、【連續性鎖定】 → 十、視覺與物理防錯.
-- **Ficha da Cissia (fixa):** <<<video_1>>> como única referência; rosto, **pupila com cruz vermelha**, maria-chiquinhas
-  loiras (2), **uma única cauda de cobra branca** (1), dentes de tubarão, traje N.E.P.S. (salvo figurino da cena);
-  【特別禁止獸耳與松鼠臉】; sempre 3 elementos longos.
+- **Ficha da Cissia (NUNCA descrever a aparência dela; se descrever, o gerador bloqueia):** use só o bloco
+  「@[Video 1](video_1)＝Cissia。外觀、服裝、髮型與尾巴設計只來自 @[Video 1](video_1)，文字不重新描述她的外貌。
+  不使用 @[Video 1](video_1) 的背景、場景、燈光與其他人物。全片只有一個 Cissia。」
+  Não escreva cor de olho, pupila em cruz, cabelo loiro, dentes de tubarão, cor da cauda, N.E.P.S. nem nome de
+  personagem ou lugar de jogo. Pode dizer "雙馬尾 2 束加蛇尾 1 條，恆為 3 件長條元素" e descrever o comportamento
+  da cauda. Os olhos são "只有正常的反光點". Termine sempre com o bloco
+  `【NEGATIVE】 no animal ears, no squirrel cheeks; no glowing eyes, no spirals or rings in eyes; no floating objects; no Chinese characters anywhere on screen`.
 - **Regras que entram sempre:** cada fala é subproduto do corpo, cortada por ação, respiração ou impacto, e anotada
   com o momento e o estado da voz; energia de corpo inteiro, com preparo → ação → overshoot → volta; mãos não
   voltam direto ao corpo; nada de tremer ou girar sem motivo; contato físico com reação visível; bloqueio de
