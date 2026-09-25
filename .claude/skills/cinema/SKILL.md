@@ -55,6 +55,12 @@ Em português, curto e direto:
 
 Não despeje as propostas inteiras dos 13 agentes na resposta. O usuário quer o resultado, não a reunião.
 
+## Entrega na conversa (padrão do usuário)
+
+Sempre que criar ou atualizar um prompt, cole o prompt final INTEIRO na resposta, sozinho, dentro de um único
+bloco de código, para o usuário copiar. Nada de texto dentro do bloco além do próprio prompt. Comentários, se
+houver, vêm depois do bloco e bem curtos.
+
 ## Formato obrigatório dos prompts da Cissia (padrão do usuário)
 
 O modelo de referência é `prompts/cissia-mosquito-30s-padrao.md`. Todo prompt novo da Cissia segue esse modelo:
