@@ -61,6 +61,13 @@ Sempre que criar ou atualizar um prompt, cole o prompt final INTEIRO na resposta
 bloco de código, para o usuário copiar. Nada de texto dentro do bloco além do próprio prompt. Comentários, se
 houver, vêm depois do bloco e bem curtos.
 
+## Estilo de movimento, expressão e linhas (sempre incluir)
+
+Vem da análise do vídeo de referência do usuário (`prompts/analise-video-referencia.md`). Todo prompt da Cissia
+traz, em chinês, os blocos 【動作語言】 e 【表情語言】 na seção 五, e as regras de漫符/動態線, visão do objeto
+e 寶物光 na seção 八. O modelo pronto está em `prompts/cissia-entrega-30s.md`. Em cada ACT, use no máximo um
+efeito de linha, colocado no momento emocional mais forte.
+
 ## Formato obrigatório dos prompts da Cissia (padrão do usuário)
 
 O modelo de referência é `prompts/cissia-mosquito-30s-padrao.md`. Todo prompt novo da Cissia segue esse modelo:
