@@ -4,7 +4,9 @@ Referência para criar cenas novas da Kayanagi no mesmo nível dos prompts em `p
 Os prompts são escritos em **chinês tradicional**; só as falas (entre aspas) são em **inglês**.
 
 - `prompts/02_aquario.md` é o **original**: dele vem a energia (a ação física exagerada, o jeito dela se mexer).
-- `prompts/03_minecraft.md` é o **padrão de qualidade**: toda cena nova deve ter a estrutura dele.
+- `prompts/03_minecraft.md` é a referência de **história** (arco, virada, final), mas o texto deve seguir a prosa do aquário.
+- `prompts/04_sushi.md` é um **exemplo do que não fazer** (ver "Lições dos vídeos gerados").
+- `prompts/05_congelador.md` aplica as lições: forma nova, mesma energia.
 
 ## Por que o Minecraft é superior (a receita)
 
@@ -20,6 +22,24 @@ O aquário tem energia, mas é uma sequência de ações. O Minecraft tem energi
 8. **Plantar e pagar:** a esmeralda escondida no bolso volta no final.
 9. **Ficha técnica por plano:** tempo em segundos, lente (24mm, 85mm, 100mm), ângulo, ação quadro a quadro, fala com instrução de como ela é cortada.
 10. **Som como ação:** vozes esticadas e cortadas, estática, o mundo ficando distante.
+
+## Lições dos vídeos gerados (o que funciona de verdade)
+
+O sushi (`04_sushi.md`) ficou ruim e o aquário ficou bom. Olhando os quadros:
+
+- **Ela sentada = cena morta.** No sushi ela passa a maior parte sentada no balcão comendo, depois sentada no prato.
+  O aquário não tem nenhum momento sentado.
+- **Ela tem que fazer a ação, não sofrer a ação.** No sushi quem age é o chef e a esteira; ela é carregada.
+  No aquário ela corre, mergulha, enfia a cabeça, puxa. O mundo só reage.
+- **Poucas ações grandes > muitas piadas pequenas.** O sushi tinha umas 25 mini piadas (chá, molho, pilha de pratos, placa...)
+  e virou 27 cortes curtos sem nenhuma ação completa. O aquário tem ~6 ações físicas grandes, cada uma com tempo.
+- **Plano aberto mata a energia.** No sushi ela aparece pequena, longe. No aquário a câmera está colada nela.
+- **Linhas de velocidade nos braços são a assinatura.** Precisam estar lá, em mais de um momento.
+- **Rosto de anime exagerado funciona:** bochecha estufada, boca maior que o rosto, olhos de estrela.
+- **O prompt em prosa (estilo aquário) gerou resultado melhor** que o formato em lista com minutagem.
+- **Não repetir a forma.** O sofá funcionou mas é o aquário com outros objetos. Cada cena nova precisa de:
+  entrada diferente, jeito diferente de se locomover, ação central diferente e final diferente.
+  O que se mantém são os princípios (energia, física, câmera colada, linhas de velocidade), não a sequência.
 
 ## Como usar a referência (vídeo ou imagem)
 
