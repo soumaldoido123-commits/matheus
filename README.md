@@ -14,3 +14,9 @@ Desça da caminhonete, pegue cargas com física, coloque na caçamba e entregue 
 Robôs gigantes numa cidade destrutível, com inimigos, ondas e chefão.
 
 Os controles estão no começo de cada script.
+
+## Equipe de cinema (Claude Code)
+Em `.claude/agents/` estão 13 agentes especialistas (roteiro, pesquisa de humanidade, caçador de clichês,
+fotografia, câmera, ângulos, movimento, cores, direção de arte, animação, música, som e montagem).
+A skill `/cinema` (`.claude/skills/cinema/SKILL.md`) coordena a equipe em 3 rodadas (proposta, revisão
+cruzada e fechamento) e entrega um prompt de vídeo, animação ou música com cara de feito por humanos.
