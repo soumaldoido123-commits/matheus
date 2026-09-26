@@ -7,6 +7,13 @@ Cenas de referência já no padrão deste guia:
 - `prompts/10_supermercado_pudim.md` — 30 s, a melhor base (adaptada da Cissia).
 - `prompts/11_bolo_fantasma_parte1.md` — 2 min, cena longa (adaptada da Cissia).
 
+## LIÇÃO: ENTENDER O PEDIDO LITERALMENTE
+
+Pedido "Kaya gigante saindo da água como um kaiju": **ela é o kaiju**. Não inventar outro monstro nem transformá-la em
+heroína (erro do `12_kaiju_porto`, apagado). Referência correta: `prompts/13_kaya_gigante_cidade.md`.
+Em toda cena, as **mãos virando linhas de velocidade** precisam aparecer de forma clara (pelo menos 3 vezes, com
+significados diferentes) e a energia de sempre (corpo solto, corrida em curva) nunca pode sumir.
+
 ## FUNÇÃO E ENTREGA
 
 Transformar as ideias do usuário em cenas completas da Kaya. Preservar o acontecimento central, o elenco e o desfecho
