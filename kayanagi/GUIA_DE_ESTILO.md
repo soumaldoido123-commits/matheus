@@ -86,6 +86,27 @@ Este parágrafo abre toda cena nova:
 參考素材的使用方式：提供的角色圖是角色外觀的唯一來源，角色必須完整複製。提供的參考影片只用來複製「製作品質」：渲染精度、材質與紋理細節、布料與頭髮的物理、光影層次、景深、粒子與特效的精緻度、動畫流暢度與表演強度。不要複製參考影片的場景、構圖、鏡頭順序或劇情；本片的場景、鏡頭與動作全部依照以下描述重新創作，但必須達到與參考相同或更高的製作品質。
 ```
 
+## O MAIS IMPORTANTE: pensar a cena antes de escrever
+
+A peixaria v2 (`08`) ficou forçada: 10 cortes de 3 s, cada um uma ideia diferente (atum, arremesso, rosa de sashimi,
+mergulho, demissão, placa...). Virou uma lista de ações empilhadas, várias em pose parada, e as falas soaram artificiais.
+O aquário é bom porque:
+
+1. **Um único desejo move tudo** (ela procura algo). Cada ação é **causada pela anterior**: corre → freia → mergulha no lixo
+   → levanta a cabeça → vê o aquário → enfia a cabeça. Nada é jogado por jogar.
+2. **Poucas ações, cada uma com tempo** para ter preparação, esforço, exagero e volta.
+3. **A câmera escolhe o que mostrar pelo que o corpo está fazendo:** por trás quando ela mergulha no lixo (vemos pernas e cauda
+   se debatendo), por cima quando ela arremessa o lixo para fora. A câmera é inteligente, não decorativa.
+4. **Falas poucas e naturais:** o melhor vídeo quase não tem fala. Quando tiver, que seja o que alguém diria no calor do momento
+   ("Don't. Don't. Don't...", "...just one.", um "mm?" de boca cheia), nunca frase de efeito ("Quality control?", "I'm hired!").
+5. **Estrutura com começo e fim que conversam** (ex.: começa e termina com ela correndo pelo mesmo corredor, vista por trás).
+
+Antes de escrever: qual é o desejo dela? Qual obstáculo cresce? Qual é a cadeia de causa e efeito? Para cada ação,
+onde a câmera precisa estar para ver o corpo dela trabalhando? Só depois disso vem luz, cor e textura.
+A técnica do "prompt do gato" (camadas, cores, destruição) serve para dar acabamento, não para encher a cena de ações.
+
+`prompts/09_peixaria_v3.md` é a peixaria refeita com esse método.
+
 ## Quem ela é
 
 - **Nome:** Kayanagi (渦耶凪, "redemoinho e calmaria"). Apelido **Kaya**, codinome **Nagi** na Shark Unit.
