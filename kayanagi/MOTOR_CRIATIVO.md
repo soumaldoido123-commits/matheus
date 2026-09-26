@@ -21,6 +21,13 @@
 > - **Nunca escrever ações lentas** ("vira a cabeça devagar, quadro a quadro", "silêncio", "prende a respiração") em
 >   cenas de gênero (terror, suspense): o modelo transforma em planos parados. O medo deixa ela mais rápida.
 > - **Luz forte e legível.** Terror escuro = imagem apagada. Luar forte, relâmpagos frequentes, feixes claros.
+> - **Som (medido nos vídeos):** o aquário original NÃO descreve som nenhum, e o gerador colocou sozinho efeitos de
+>   desenho animado colados em cada movimento ("vush" dos braços, chiado da freada) e silêncios de contraste. Parcela de
+>   som agudo tipo "vush": aquário 13,5%, congelador 11,3%, peixaria v2 10,7%, sushi 9,8%, sofá 7,4%, terror 5,6%.
+>   O terror (chuva, trovão e música descritos) virou uma parede grave e constante. Regra: **não escrever ambiente
+>   sonoro nem trilha contínua**; escrever só o som de cada movimento dentro da própria ação (cada volta do braço/linha
+>   de movimento = um "咻" agudo; freada = "吱——"; arremesso = "咻—砰"); ambiente, se existir, "muito longe e baixo";
+>   um momento de silêncio de contraste antes da explosão. É correlação em 6 vídeos, não prova, mas bate com o que o usuário sentiu.
 > - **Não sobre-especificar** (listas de materiais, parágrafos de som, regras longas de monstro): o aquário não tem
 >   nada disso e dá mais liberdade de movimento ao modelo. Ver `prompts/16_casa_assombrada_v2.md`.
 
