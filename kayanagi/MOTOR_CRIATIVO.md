@@ -42,6 +42,12 @@
 >   (mesma pose, direção e lugar)**; queda sempre com o levantar no mesmo plano; mudança de lugar sempre com o
 >   trajeto visível; o objetivo da ação tem que estar no quadro (a porta que ela bloqueia); **nada de espelho/reflexo**;
 >   não escrever "切一個鏡頭" sem dizer de qual gesto ele continua. Ver `prompts/16_casa_assombrada_v4.md`.
+> - **O aquário quadro a quadro (todos os 721 quadros, 26/09):** são só ~9 planos em 30 s, e os principais são LONGOS
+>   e estáveis: lixeira de lado ~3 s, close pensando ~5 s (olhos correndo, piscadas, a ideia chegando), frente do
+>   aquário ~5 s (mãos na borda, tira o boné, põe na mesa, mergulha, tudo num plano só), dentro d'água ~4 s.
+>   A câmera colada e em movimento é só na corrida. É isso que faz dar para ver o PENSAMENTO dela.
+>   Regra final: **o jeito mais seguro de chegar na qualidade do aquário é reescrever o próprio texto do aquário,
+>   frase por frase, trocando só os objetos e a situação** (`prompts/16_casa_assombrada_v5.md`).
 > - **Não sobre-especificar** (listas de materiais, parágrafos de som, regras longas de monstro): o aquário não tem
 >   nada disso e dá mais liberdade de movimento ao modelo. Ver `prompts/16_casa_assombrada_v2.md`.
 
