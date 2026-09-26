@@ -1,5 +1,13 @@
 # MOTOR CRIATIVO — o que o outro chat fazia de certo (e como eu uso na Kaya)
 
+> **MODELO-MESTRE: `prompts/02_aquario.md`.** Toda cena nova usa o esqueleto e o jeito de escrever do aquário:
+> núcleo "核心不是劇情邏輯，而是超高能量 acting"; corpo solto; mãos em moinho que somem em linhas várias vezes;
+> câmera viva que persegue ELA (nunca plano aberto que a diminui); ≤3 objetos que participam; a ação mais difícil
+> (entrar/sair de algo) com mais texto; quase sem fala; final seco. Da cena do dragão vem só o acabamento
+> (luz, cor, materiais). Muda a cada cena: cenário, entrada, ação central, ângulos únicos e final.
+> Referência aplicada: `prompts/15_lavanderia.md`. Regras do guia-mestre que freiam energia
+> ("linhas só no pico", "só 3 vezes", "sem tremor constante") NÃO valem por cima do aquário.
+
 Fonte: chat do usuário com outro modelo sobre a Cissia (≈170 pedidos, set/2026). O usuário considera esse chat
 "ouro": o modelo errava muito, mas **toda ideia virava uma cena legal de assistir**. Este arquivo explica por quê.
 
