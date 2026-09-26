@@ -33,6 +33,15 @@
 >   um acontecimento por vez e um plano principal por trecho. Regras: um único espaço com os objetos-chave visíveis
 >   desde o início; escrever a linha da história em uma frase no prompt; o monstro/efeito só aparece em momentos
 >   marcados; relâmpago/flash só nos 2–3 momentos-chave; nada de subtramas extras (escada, lustre...).
+> - **Teletransporte e cortes (terror v3 em 15 s, analisado quadro a quadro, 26/09):** ela cai de joelhos e no corte
+>   seguinte já está em pé em outro canto (2,67 s); empilha coisas sem a porta aparecer no quadro (sem motivo);
+>   o espelho gerou DUAS Kayas (reflexo entrando no relógio enquanto o rosto dela ainda estava na frente);
+>   o momento "monstro toca a cauda" sumiu, então a explosão do relógio não tinha causa. Causas: ~16 acontecimentos
+>   para 15 s (o gerador corta transições para caber); cortes que abrem com uma ação nova em vez de continuar a anterior.
+>   Regras: **orçamento de acontecimentos** (15 s ≈ 6 trechos; 30 s ≈ 10); **todo corte continua o último gesto
+>   (mesma pose, direção e lugar)**; queda sempre com o levantar no mesmo plano; mudança de lugar sempre com o
+>   trajeto visível; o objetivo da ação tem que estar no quadro (a porta que ela bloqueia); **nada de espelho/reflexo**;
+>   não escrever "切一個鏡頭" sem dizer de qual gesto ele continua. Ver `prompts/16_casa_assombrada_v4.md`.
 > - **Não sobre-especificar** (listas de materiais, parágrafos de som, regras longas de monstro): o aquário não tem
 >   nada disso e dá mais liberdade de movimento ao modelo. Ver `prompts/16_casa_assombrada_v2.md`.
 
