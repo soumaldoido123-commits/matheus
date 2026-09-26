@@ -28,6 +28,11 @@
 >   sonoro nem trilha contínua**; escrever só o som de cada movimento dentro da própria ação (cada volta do braço/linha
 >   de movimento = um "咻" agudo; freada = "吱——"; arremesso = "咻—砰"); ambiente, se existir, "muito longe e baixo";
 >   um momento de silêncio de contraste antes da explosão. É correlação em 6 vídeos, não prova, mas bate com o que o usuário sentiu.
+> - **Clareza (terror v2 ficou confuso, 26/09):** energia e som melhoraram, mas a cena confundiu. O aquário é claro
+>   porque tem um lugar só com geografia fixa (lixeira e aquário sempre no mesmo lugar), uma linha de história,
+>   um acontecimento por vez e um plano principal por trecho. Regras: um único espaço com os objetos-chave visíveis
+>   desde o início; escrever a linha da história em uma frase no prompt; o monstro/efeito só aparece em momentos
+>   marcados; relâmpago/flash só nos 2–3 momentos-chave; nada de subtramas extras (escada, lustre...).
 > - **Não sobre-especificar** (listas de materiais, parágrafos de som, regras longas de monstro): o aquário não tem
 >   nada disso e dá mais liberdade de movimento ao modelo. Ver `prompts/16_casa_assombrada_v2.md`.
 
