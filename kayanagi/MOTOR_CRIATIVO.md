@@ -8,6 +8,23 @@
 > Referência aplicada: `prompts/15_lavanderia.md`. Regras do guia-mestre que freiam energia
 > ("linhas só no pico", "só 3 vezes", "sem tremor constante") NÃO valem por cima do aquário.
 
+> **Lições do vídeo de terror (`16` v1 × aquário), 26/09:**
+> - **Linhas de movimento NÃO são "mão girando como moinho".** São o braço fazendo um movimento real e grande
+>   (correr jogando os braços para a frente, arremessar, cavar, puxar), e, no trecho mais rápido, o braço vira
+>   várias linhas brancas finas e afiladas **ao longo do arco que ele realmente percorre**, com a mão ainda visível
+>   na ponta. Quanto mais rápido, mais linhas. Correndo, os braços puxam o corpo para a frente. No v1 viraram anéis
+>   simétricos girando em volta de um corpo parado: errado.
+> - **Câmera de corrida:** colada nela, na mesma velocidade, na frente e de lado, na altura da cintura, de baixo para
+>   cima, inclinada ~20°, ela ocupando mais da metade do quadro, fundo esticado em listras. Nunca plano fixo distante
+>   com ela pequena no centro (o v1 fez isso no relógio e na fuga).
+> - **O primeiro quadro já tem ela em velocidade máxima.** O v1 começou com 1 s de porta vazia.
+> - **Nunca escrever ações lentas** ("vira a cabeça devagar, quadro a quadro", "silêncio", "prende a respiração") em
+>   cenas de gênero (terror, suspense): o modelo transforma em planos parados. O medo deixa ela mais rápida.
+> - **Luz forte e legível.** Terror escuro = imagem apagada. Luar forte, relâmpagos frequentes, feixes claros.
+> - **Não sobre-especificar** (listas de materiais, parágrafos de som, regras longas de monstro): o aquário não tem
+>   nada disso e dá mais liberdade de movimento ao modelo. Ver `prompts/16_casa_assombrada_v2.md`.
+
+
 Fonte: chat do usuário com outro modelo sobre a Cissia (≈170 pedidos, set/2026). O usuário considera esse chat
 "ouro": o modelo errava muito, mas **toda ideia virava uma cena legal de assistir**. Este arquivo explica por quê.
 
