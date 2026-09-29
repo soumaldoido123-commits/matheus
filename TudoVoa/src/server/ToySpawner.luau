@@ -111,6 +111,20 @@ local function step()
 	end
 end
 
+-- Preenche todos os pontos de aparicao de uma vez (fim da geracao do mundo)
+function ToySpawner.fillAll()
+	local n = 0
+	for _, slot in slots do
+		if not slot.model then
+			fillSlot(slot)
+			n += 1
+			if n % 20 == 0 then
+				task.wait()
+			end
+		end
+	end
+end
+
 function ToySpawner.spawnForPlayer(player: Player, toyId: string): (boolean, string)
 	if not Data.isLoaded(player) then
 		return false, "Carregando..."

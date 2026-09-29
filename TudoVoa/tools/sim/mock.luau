@@ -173,7 +173,25 @@ Vector2.zero = Vector2.new(0, 0)
 -- Color3 ---------------------------------------------------------------------------------------------
 local C3 = { __type = "Color3" }
 C3.__index = function(t, k)
-	if k == "Lerp" then
+	if k == "ToHSV" then
+		return function()
+			local r, g, b = t.R, t.G, t.B
+			local mx, mn = math.max(r, g, b), math.min(r, g, b)
+			local d = mx - mn
+			local h = 0
+			if d > 0 then
+				if mx == r then
+					h = ((g - b) / d) % 6
+				elseif mx == g then
+					h = (b - r) / d + 2
+				else
+					h = (r - g) / d + 4
+				end
+				h /= 6
+			end
+			return h, mx == 0 and 0 or d / mx, mx
+		end
+	elseif k == "Lerp" then
 		return function(_, o, a)
 			return Color3.new(t.R + (o.R - t.R) * a, t.G + (o.G - t.G) * a, t.B + (o.B - t.B) * a)
 		end
@@ -256,6 +274,12 @@ ColorSequence = { new = function(a, b) return { a, b } end }
 UDim2 = { new = function(...) return { ... } end, fromScale = function(...) return { ... } end, fromOffset = function(...) return { ... } end }
 UDim = { new = function(...) return { ... } end }
 PhysicalProperties = { new = function(...) return { ... } end }
+RaycastParams = { new = function() return { FilterDescendantsInstances = {} } end }
+OverlapParams = { new = function() return { FilterDescendantsInstances = {} } end }
+NumberSequenceKeypoint = NumberSequenceKeypoint
+ColorSequenceKeypoint = { new = function(t, c) return { Time = t, Value = c } end }
+Rect = { new = function() return {} end }
+Font = { fromEnum = function(e) return e end }
 
 -- CFrame minimo (so posicao + identidade de rotacao) --------------------------------------------------------------------------------
 local CF = { __type = "CFrame" }
@@ -356,11 +380,48 @@ instMt.__newindex = function(t, k, v)
 			table.insert(rawget(v, "_children"), t)
 		end
 	else
-		rawget(t, "_props")[k] = v
+		local props = rawget(t, "_props")
+		props[k] = v
+		if k == "CFrame" and v then
+			props.Position = v.Position
+		end
 	end
+end
+local CLASS_PARENT = {
+	Part = "BasePart", WedgePart = "BasePart", MeshPart = "BasePart", SpawnLocation = "Part", TrussPart = "BasePart",
+	BasePart = "PVInstance", Model = "PVInstance", PVInstance = "Instance", Folder = "Instance", Attachment = "Instance",
+	ProximityPrompt = "Instance", ModuleScript = "Instance", Script = "Instance",
+	TextLabel = "GuiObject", Frame = "GuiObject", TextButton = "GuiObject", ImageLabel = "GuiObject", GuiObject = "GuiBase2d",
+	PointLight = "Light", SpotLight = "Light", Light = "Instance",
+}
+local function isA(cn, target)
+	while cn do
+		if cn == target then
+			return true
+		end
+		cn = CLASS_PARENT[cn]
+	end
+	return target == "Instance"
 end
 local function mk(className, name)
 	local o = setmetatable({ __isInstance = true, _props = { ClassName = className, Name = name or className }, _children = {} }, instMt)
+	if isA(className, "BasePart") then
+		local props = rawget(o, "_props")
+		props.CFrame = CFrame.new(0, 0, 0)
+		props.Position = Vector3.new(0, 0, 0)
+		props.Size = Vector3.new(4, 1, 2)
+		props.Anchored = false
+		props.CanCollide = true
+		props.Massless = false
+		props.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		props.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+		props.AssemblyMass = 10
+		props.Color = Color3.new(1, 1, 1)
+		props.Transparency = 0
+		props.PivotOffset = CFrame.new(0, 0, 0)
+		props.CollisionGroup = "Default"
+		props.AssemblyRootPart = o
+	end
 	return o
 end
 function instMethods.WaitForChild(self, name)
@@ -373,17 +434,25 @@ function instMethods.WaitForChild(self, name)
 	c.Parent = self
 	return c
 end
-function instMethods.FindFirstChild(self, name)
+function instMethods.FindFirstChild(self, name, recursive)
 	for _, c in rawget(self, "_children") do
 		if c.Name == name then
 			return c
+		end
+	end
+	if recursive then
+		for _, c in rawget(self, "_children") do
+			local r = instMethods.FindFirstChild(c, name, true)
+			if r then
+				return r
+			end
 		end
 	end
 	return nil
 end
 function instMethods.FindFirstChildOfClass(self, cn)
 	for _, c in rawget(self, "_children") do
-		if c.ClassName == cn then
+		if isA(c.ClassName, cn) then
 			return c
 		end
 	end
@@ -404,8 +473,26 @@ function instMethods.GetDescendants(self)
 	return out
 end
 function instMethods.IsA(self, cn)
-	return self.ClassName == cn
+	return isA(self.ClassName, cn)
 end
+function instMethods.GetMass() return 10 end
+function instMethods.SetNetworkOwner() end
+function instMethods.SetNetworkOwnershipAuto() end
+function instMethods.ApplyImpulse() end
+function instMethods.ClearAllChildren(self)
+	for _, c in table.clone(rawget(self, "_children")) do
+		c.Parent = nil
+	end
+end
+function instMethods.RemoveTag(self, tag)
+	services.CollectionService:RemoveTag(self, tag)
+end
+function instMethods.GetTags() return {} end
+function instMethods.GetAttributeChangedSignal() return newSignal() end
+function instMethods.FindFirstAncestor() return nil end
+function instMethods.GetFullName(self) return self.Name end
+function instMethods.GetPivot() return CFrame.new(0, 0, 0) end
+function instMethods.TweenPosition() end
 function instMethods.Destroy(self)
 	self.Parent = nil
 end
@@ -418,15 +505,24 @@ end
 function instMethods.GetPropertyChangedSignal()
 	return newSignal()
 end
-function instMethods.AddTag() end
-function instMethods.HasTag()
-	return false
+function instMethods.AddTag(self, tag)
+	services.CollectionService:AddTag(self, tag)
+end
+function instMethods.HasTag(self, tag)
+	return services.CollectionService:HasTag(self, tag)
 end
 function instMethods.Clone(self)
 	return mk(self.ClassName, self.Name)
 end
 function instMethods.PivotTo() end
-function instMethods.IsDescendantOf()
+function instMethods.IsDescendantOf(self, other)
+	local p = rawget(self, "_props").Parent
+	while p do
+		if p == other then
+			return true
+		end
+		p = rawget(p, "_props").Parent
+	end
 	return false
 end
 function instMethods.FindFirstAncestorOfClass()
@@ -473,7 +569,7 @@ function workspace.GetPartBoundsInRadius()
 	return {}
 end
 
-local services = {}
+services = {}
 game = mk("DataModel", "Game")
 function game.GetService(_, name)
 	local s = services[name]
@@ -501,10 +597,28 @@ services.Players.PlayerRemoving = newSignal()
 function services.Players.GetPlayers() return {} end
 function services.Players.GetPlayerFromCharacter() return nil end
 services.CollectionService = mk("CollectionService", "CollectionService")
-function services.CollectionService.AddTag() end
-function services.CollectionService.RemoveTag() end
-function services.CollectionService.HasTag() return false end
-function services.CollectionService.GetTagged() return {} end
+local tagged = {}
+function services.CollectionService.AddTag(_, inst, tag)
+	tagged[tag] = tagged[tag] or {}
+	tagged[tag][inst] = true
+end
+function services.CollectionService.RemoveTag(_, inst, tag)
+	if tagged[tag] then
+		tagged[tag][inst] = nil
+	end
+end
+function services.CollectionService.HasTag(_, inst, tag)
+	return tagged[tag] ~= nil and tagged[tag][inst] == true
+end
+function services.CollectionService.GetTagged(_, tag)
+	local out = {}
+	for inst in tagged[tag] or {} do
+		table.insert(out, inst)
+	end
+	return out
+end
+function services.CollectionService.GetInstanceAddedSignal() return newSignal() end
+function services.CollectionService.GetInstanceRemovedSignal() return newSignal() end
 services.DataStoreService = mk("DataStoreService", "DataStoreService")
 function services.DataStoreService.GetDataStore()
 	local store = { _d = {} }
@@ -523,11 +637,33 @@ function services.DataStoreService.GetOrderedDataStore()
 end
 
 -- task -----------------------------------------------------------------------------------------------------------------------------------------
+__DELAYED = {}
 task = {
-	wait = function() return 0 end,
-	spawn = function(fn, ...) return coroutine.wrap(fn)(...) end,
-	defer = function(fn, ...) return coroutine.wrap(fn)(...) end,
-	delay = function() end,
+	wait = function(t)
+		if coroutine.isyieldable() then
+			coroutine.yield()
+		end
+		return t or 0
+	end,
+	spawn = function(fn, ...)
+		local co = coroutine.create(fn)
+		local ok, err = coroutine.resume(co, ...)
+		if not ok then
+			warn("task.spawn erro:", err)
+		end
+		return co
+	end,
+	defer = function(fn, ...)
+		local co = coroutine.create(fn)
+		local ok, err = coroutine.resume(co, ...)
+		if not ok then
+			warn("task.defer erro:", err)
+		end
+		return co
+	end,
+	delay = function(t, fn, ...)
+		table.insert(__DELAYED, { t = t, fn = fn, args = { ... } })
+	end,
 	cancel = function() end,
 }
 function wait() return 0 end
