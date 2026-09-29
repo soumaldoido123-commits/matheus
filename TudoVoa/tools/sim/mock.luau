@@ -235,7 +235,7 @@ Enum = setmetatable({}, {
 		if not e then
 			e = setmetatable({}, {
 				__index = function(t, itemName)
-					local item = setmetatable({ Name = itemName, EnumType = enumName }, { __type = "EnumItem", __tostring = function() return "Enum." .. enumName .. "." .. itemName end })
+					local item = setmetatable({ Name = itemName, EnumType = enumName, Value = 100 }, { __type = "EnumItem", __tostring = function() return "Enum." .. enumName .. "." .. itemName end })
 					rawset(t, itemName, item)
 					return item
 				end,
@@ -271,8 +271,18 @@ NumberRange = { new = function(a, b) return { Min = a, Max = b or a } end }
 NumberSequenceKeypoint = { new = function(t, v) return { Time = t, Value = v } end }
 NumberSequence = { new = function(a) return a end }
 ColorSequence = { new = function(a, b) return { a, b } end }
-UDim2 = { new = function(...) return { ... } end, fromScale = function(...) return { ... } end, fromOffset = function(...) return { ... } end }
-UDim = { new = function(...) return { ... } end }
+UDim = { new = function(s, o) return { Scale = s or 0, Offset = o or 0 } end }
+UDim2 = {
+	new = function(xs, xo, ys, yo)
+		return { X = { Scale = xs or 0, Offset = xo or 0 }, Y = { Scale = ys or 0, Offset = yo or 0 } }
+	end,
+	fromScale = function(x, y)
+		return { X = { Scale = x or 0, Offset = 0 }, Y = { Scale = y or 0, Offset = 0 } }
+	end,
+	fromOffset = function(x, y)
+		return { X = { Scale = 0, Offset = x or 0 }, Y = { Scale = 0, Offset = y or 0 } }
+	end,
+}
 PhysicalProperties = { new = function(...) return { ... } end }
 RaycastParams = { new = function() return { FilterDescendantsInstances = {} } end }
 OverlapParams = { new = function() return { FilterDescendantsInstances = {} } end }
@@ -284,7 +294,21 @@ Font = { fromEnum = function(e) return e end }
 -- CFrame minimo (so posicao + identidade de rotacao) --------------------------------------------------------------------------------
 local CF = { __type = "CFrame" }
 CF.__index = function(t, k)
-	if k == "Position" then
+	if k == "Inverse" then
+		return function(self) return CFrame.new(-t.X, -t.Y, -t.Z) end
+	elseif k == "Lerp" then
+		return function(self, o, a) return CFrame.new(t.X + (o.X - t.X) * a, t.Y + (o.Y - t.Y) * a, t.Z + (o.Z - t.Z) * a) end
+	elseif k == "VectorToObjectSpace" or k == "VectorToWorldSpace" then
+		return function(self, v) return v end
+	elseif k == "PointToObjectSpace" then
+		return function(self, v) return Vector3.new(v.X - t.X, v.Y - t.Y, v.Z - t.Z) end
+	elseif k == "PointToWorldSpace" then
+		return function(self, v) return Vector3.new(v.X + t.X, v.Y + t.Y, v.Z + t.Z) end
+	elseif k == "ToObjectSpace" then
+		return function(self, o) return CFrame.new(o.X - t.X, o.Y - t.Y, o.Z - t.Z) end
+	elseif k == "GetComponents" then
+		return function() return t.X, t.Y, t.Z, 1, 0, 0, 0, 1, 0, 0, 0, 1 end
+	elseif k == "Position" then
 		return Vector3.new(t.X, t.Y, t.Z)
 	elseif k == "LookVector" then
 		return Vector3.new(0, 0, -1)
@@ -296,6 +320,12 @@ CF.__index = function(t, k)
 		return CFrame.new(0, 0, 0)
 	end
 	return rawget(CF, k)
+end
+CF.__add = function(a, v)
+	return CFrame.new(a.X + v.X, a.Y + v.Y, a.Z + v.Z)
+end
+CF.__sub = function(a, v)
+	return CFrame.new(a.X - v.X, a.Y - v.Y, a.Z - v.Z)
 end
 CF.__mul = function(a, b)
 	if typeof(b) == "Vector3" then
@@ -312,6 +342,12 @@ function CFrame.new(x, y, z)
 end
 function CFrame.Angles()
 	return CFrame.new(0, 0, 0)
+end
+function CFrame.fromAxisAngle()
+	return CFrame.new(0, 0, 0)
+end
+function CFrame.fromMatrix(pos)
+	return CFrame.new(pos)
 end
 function CFrame.lookAt(a)
 	return CFrame.new(a)
@@ -338,6 +374,10 @@ local function newSignal()
 	return s
 end
 
+local SIGNALS = {}
+for _, n in { "Touched", "TouchEnded", "Changed", "ChildAdded", "ChildRemoved", "DescendantAdded", "DescendantRemoving", "Destroying", "AncestryChanged", "OnServerEvent", "OnClientEvent", "Activated", "MouseEnter", "MouseLeave", "MouseButton1Down", "MouseButton1Up", "MouseButton1Click", "MouseButton2Click", "InputBegan", "InputEnded", "InputChanged", "Triggered", "TriggerEnded", "Died", "Completed", "FocusLost", "Ended", "Stopped", "Played", "Loaded", "HealthChanged", "StateChanged", "Seated", "Heartbeat", "RenderStepped", "Stepped", "PlayerAdded", "PlayerRemoving", "CharacterAdded", "CharacterRemoving", "PromptTriggered", "JumpRequest", "TouchTapInWorld" } do
+	SIGNALS[n] = true
+end
 local Inst = {}
 local instMt = { __type = "Instance" }
 local instMethods = {}
@@ -351,8 +391,8 @@ instMt.__index = function(t, k)
 	if m then
 		return m
 	end
-	-- sinais (Touched, Changed...) sob demanda
-	if type(k) == "string" and k:match("^[A-Z]") then
+	-- sinais conhecidos (criados sob demanda)
+	if SIGNALS[k] then
 		local ch = rawget(t, "_children")
 		for _, c in ch do
 			if c.Name == k then
@@ -362,6 +402,14 @@ instMt.__index = function(t, k)
 		local sig = newSignal()
 		props[k] = sig
 		return sig
+	end
+	-- filhos por nome (workspace.Terrain, etc.)
+	if type(k) == "string" then
+		for _, c in rawget(t, "_children") do
+			if c.Name == k then
+				return c
+			end
+		end
 	end
 	return nil
 end
@@ -405,6 +453,17 @@ local function isA(cn, target)
 end
 local function mk(className, name)
 	local o = setmetatable({ __isInstance = true, _props = { ClassName = className, Name = name or className }, _children = {} }, instMt)
+	if className == "Humanoid" then
+		local props = rawget(o, "_props")
+		props.WalkSpeed = 16
+		props.Health = 100
+		props.MaxHealth = 100
+		props.CameraOffset = Vector3.new(0, 0, 0)
+		props.AutoRotate = true
+		props.PlatformStand = false
+		props.RigType = Enum.HumanoidRigType.R15
+		props.JumpPower = 50
+	end
 	if isA(className, "BasePart") then
 		local props = rawget(o, "_props")
 		props.CFrame = CFrame.new(0, 0, 0)
@@ -416,6 +475,7 @@ local function mk(className, name)
 		props.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 		props.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 		props.AssemblyMass = 10
+		props.ReceiveAge = 0
 		props.Color = Color3.new(1, 1, 1)
 		props.Transparency = 0
 		props.PivotOffset = CFrame.new(0, 0, 0)
@@ -476,6 +536,44 @@ function instMethods.IsA(self, cn)
 	return isA(self.ClassName, cn)
 end
 function instMethods.GetMass() return 10 end
+function instMethods.Play() end
+function instMethods.Stop() end
+function instMethods.Pause() end
+function instMethods.Resume() end
+function instMethods.Emit() end
+function instMethods.Cancel() end
+function instMethods.LoadCharacter() end
+function instMethods.LoadCharacterAsync() end
+function instMethods.GetPlayerFromCharacter() return nil end
+function instMethods.GetNetworkOwner() return nil end
+function instMethods.GetBoundingBox() return CFrame.new(0, 0, 0), Vector3.new(4, 4, 4) end
+function instMethods.MoveTo() end
+function instMethods.ChangeState() end
+function instMethods.SetStateEnabled() end
+function instMethods.TakeDamage() end
+function instMethods.GetState() return Enum.HumanoidStateType.Running end
+function instMethods.GetChildrenOfClass() return {} end
+function instMethods.FindFirstChildWhichIsA(self, cn, recursive)
+	for _, c in rawget(self, "_children") do
+		if isA(c.ClassName, cn) then
+			return c
+		end
+	end
+	if recursive then
+		for _, c in rawget(self, "_children") do
+			local r = instMethods.FindFirstChildWhichIsA(c, cn, true)
+			if r then
+				return r
+			end
+		end
+	end
+	return nil
+end
+function instMethods.GetPropertyChangedSignalX() end
+function instMethods.IsAncestorOf() return false end
+function instMethods.ClearAllChildrenX() end
+function instMethods.Raycast() return nil end
+function instMethods.GetMouseLocation() return Vector2.new(640, 360) end
 function instMethods.SetNetworkOwner() end
 function instMethods.SetNetworkOwnershipAuto() end
 function instMethods.ApplyImpulse() end
@@ -531,6 +629,9 @@ end
 function instMethods.FireClient() end
 function instMethods.FireAllClients() end
 function instMethods.FireServer() end
+function instMethods.InvokeServer() return false, "mock" end
+function instMethods.SetCore() end
+function instMethods.GetAttributes() return {} end
 
 Instance = {
 	new = function(cn, parent)
@@ -558,11 +659,20 @@ terrain.SetMaterialColor = function() end
 workspace = mk("Workspace", "Workspace")
 workspace.Terrain = terrain
 workspace.CurrentCamera = mk("Camera")
+workspace.CurrentCamera.ViewportSize = Vector2.new(1280, 720)
+workspace.CurrentCamera.CFrame = CFrame.new(0, 40, 0)
+workspace.CurrentCamera.FieldOfView = 70
+function workspace.CurrentCamera.ViewportPointToRay(_, x, y)
+	return { Origin = Vector3.new(0, 40, 0), Direction = Vector3.new(0, 0, -1) }
+end
 workspace.Gravity = 196.2
 function workspace.GetServerTimeNow()
 	return os.clock()
 end
 function workspace.Raycast()
+	return nil
+end
+function workspace.Spherecast()
 	return nil
 end
 function workspace.GetPartBoundsInRadius()
@@ -588,14 +698,15 @@ services.RunService = mk("RunService", "RunService")
 services.RunService.Heartbeat = newSignal()
 services.RunService.RenderStepped = newSignal()
 services.RunService.Stepped = newSignal()
-function services.RunService.IsServer() return true end
-function services.RunService.IsClient() return false end
+function services.RunService.IsServer() return not __IS_CLIENT end
+function services.RunService.IsClient() return __IS_CLIENT == true end
 function services.RunService.IsStudio() return true end
 services.Players = mk("Players", "Players")
 services.Players.PlayerAdded = newSignal()
 services.Players.PlayerRemoving = newSignal()
 function services.Players.GetPlayers() return {} end
 function services.Players.GetPlayerFromCharacter() return nil end
+function services.Players.GetPlayerByUserId() return nil end
 services.CollectionService = mk("CollectionService", "CollectionService")
 local tagged = {}
 function services.CollectionService.AddTag(_, inst, tag)
@@ -634,6 +745,50 @@ function services.DataStoreService.GetOrderedDataStore()
 	function store:UpdateAsync(k, fn) self._d[k] = fn(self._d[k]) end
 	function store:GetSortedAsync() return { GetCurrentPage = function() return {} end } end
 	return store
+end
+
+-- Servicos de cliente ------------------------------------------------------------------------------------------------------------------------------
+local uis = mk("UserInputService", "UserInputService")
+services.UserInputService = uis
+uis.TouchEnabled = false
+uis.MouseEnabled = true
+uis.GamepadEnabled = false
+uis.MouseBehavior = Enum.MouseBehavior.Default
+uis.MouseIconEnabled = true
+uis.InputBegan = newSignal()
+uis.InputEnded = newSignal()
+uis.InputChanged = newSignal()
+uis.JumpRequest = newSignal()
+uis.TouchTapInWorld = newSignal()
+function uis.IsKeyDown() return false end
+function uis.GetMouseLocation() return Vector2.new(640, 360) end
+function uis.GetMouseDelta() return Vector2.new(0, 0) end
+services.ContextActionService = mk("ContextActionService", "ContextActionService")
+function services.ContextActionService.BindActionAtPriority() end
+function services.ContextActionService.BindAction() end
+function services.ContextActionService.UnbindAction() end
+services.TweenService = mk("TweenService", "TweenService")
+function services.TweenService.Create(_, inst, info, goal)
+	for k, v in goal do
+		inst[k] = v
+	end
+	return { Play = function() end, Cancel = function() end, Completed = newSignal() }
+end
+services.Debris = mk("Debris", "Debris")
+function services.Debris.AddItem() end
+services.SoundService = mk("SoundService", "SoundService")
+services.ProximityPromptService = mk("ProximityPromptService", "ProximityPromptService")
+services.ProximityPromptService.PromptTriggered = newSignal()
+services.StarterGui = mk("StarterGui", "StarterGui")
+function services.StarterGui.SetCoreGuiEnabled() end
+function services.RunService.BindToRenderStep(_, name, prio, fn)
+	__RENDER = __RENDER or {}
+	__RENDER[name] = fn
+end
+function services.RunService.UnbindFromRenderStep(_, name)
+	if __RENDER then
+		__RENDER[name] = nil
+	end
 end
 
 -- task -----------------------------------------------------------------------------------------------------------------------------------------

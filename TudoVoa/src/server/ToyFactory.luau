@@ -116,6 +116,7 @@ function Builders.plane(model, body, toy)
 	block(model, body, CFrame.new(0, 0.8, 2.0), v3(0.12, 1.3, 1.1), rgb(255, 90, 90))
 	block(model, body, CFrame.new(0, 0.1, 2.1), v3(2.6, 0.1, 0.8), rgb(120, 190, 255))
 	ball(model, body, CFrame.new(0, 0, -2.4), 0.75, rgb(255, 90, 90))
+	body:SetAttribute("AlignMode", "look")
 end
 
 function Builders.fish(model, body, toy)
@@ -129,6 +130,7 @@ function Builders.fish(model, body, toy)
 	ball(model, body, CFrame.new(0.7, 0.45, -1.7), 0.5, rgb(255, 255, 255))
 	ball(model, body, CFrame.new(-0.85, 0.45, -1.85), 0.25, rgb(10, 10, 10))
 	ball(model, body, CFrame.new(0.85, 0.45, -1.85), 0.25, rgb(10, 10, 10))
+	body:SetAttribute("AlignMode", "look")
 end
 
 function Builders.pizza(model, body, toy)
@@ -140,6 +142,7 @@ function Builders.pizza(model, body, toy)
 		cyl(model, body, CFrame.new(s), v3(0.14, 0.95, 0.95), rgb(200, 50, 50))
 	end
 	cyl(model, body, CFrame.new(0.26, 0, 0), v3(0.1, 4.2, 4.2), rgb(255, 120, 60))
+	body:SetAttribute("AlignMode", "flat")
 end
 
 function Builders.anvil(model, body, toy)
@@ -190,6 +193,7 @@ function Builders.rocket(model, body, toy)
 	flame.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1) })
 	flame.Parent = att
 	body:SetAttribute("AlignYaw", 90)
+	body:SetAttribute("AlignMode", "look")
 end
 
 function Builders.boomerang(model, body, toy)
@@ -203,6 +207,7 @@ function Builders.boomerang(model, body, toy)
 		local stripe = block(model, body, off * CFrame.new(0.4, 0.21, 0), v3(1.0, 0.05, 1.12), rgb(255, 255, 255))
 		stripe.Material = Enum.Material.SmoothPlastic
 	end
+	body:SetAttribute("AlignMode", "flatY")
 end
 
 function Builders.dynamite(model, body, toy)
@@ -227,6 +232,7 @@ function Builders.dynamite(model, body, toy)
 	spark.LightEmission = 1
 	spark.Parent = att
 	body:SetAttribute("AlignYaw", 90)
+	body:SetAttribute("AlignMode", "look")
 end
 
 function Builders.trampoline(model, body, toy)

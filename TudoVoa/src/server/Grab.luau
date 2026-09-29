@@ -397,6 +397,9 @@ local function doThrow(player: Player, key: any, dir: any, charge: any)
 
 	key:SetAttribute("Thrower", player.UserId)
 	key:SetAttribute("ThrowClock", workspace:GetServerTimeNow())
+	if player.Character then
+		player.Character:SetAttribute("ThrowT", workspace:GetServerTimeNow())
+	end
 	if kind == "object" then
 		CollectionService:AddTag(key, Config.Tags.Airborne)
 	end
