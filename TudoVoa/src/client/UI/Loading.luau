@@ -21,7 +21,7 @@ local TIPS = {
 	"Clique em um objeto para agarrar. Clique com o botão direito e segure para carregar a força!",
 	"Role o mouse enquanto segura algo para aproximar ou afastar.",
 	"Pessoas também podem ser agarradas... e elas esperneiam! (Espaço repetido para escapar)",
-	"Q/E giram o objeto, Z/X inclinam. Mire com cuidado!",
+	"Z/X giram o objeto, C/V inclinam. Mire com cuidado!",
 	"Suba de nível para desbloquear habilidades: Puxão, Impulso, Estase, Onda de Choque...",
 	"Estase congela objetos no ar: empilhe e construa escadas!",
 	"O Caça-Moedas na praça dá um prêmio a cada 15 minutos.",

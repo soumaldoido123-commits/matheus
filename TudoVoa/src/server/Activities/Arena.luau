@@ -59,7 +59,7 @@ local KINDS = {
 	basic = { size = 4.2, density = 1.2, color = rgb(90, 190, 255), accel = 46, maxSpeed = 24, bump = 60, name = "Robô" },
 	jumper = { size = 3.6, density = 1.0, color = rgb(255, 180, 60), accel = 40, maxSpeed = 22, bump = 55, hop = true, name = "Saltador" },
 	tank = { size = 7, density = 2.6, color = rgb(255, 90, 100), accel = 34, maxSpeed = 18, bump = 90, name = "Tanque" },
-	boss = { size = 12, density = 3.4, color = rgb(190, 90, 255), accel = 30, maxSpeed = 15, bump = 120, name = "Chefe Robô", boss = true },
+	boss = { size = 12, density = 2.6, color = rgb(190, 90, 255), accel = 30, maxSpeed = 15, bump = 120, name = "Chefe Robô", boss = true },
 }
 
 local function spawnBot(kind: string, pos: Vector3)

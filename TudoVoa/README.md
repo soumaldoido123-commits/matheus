@@ -29,13 +29,14 @@ rojo serve                                                # ou sincroniza ao viv
 | **Clique esquerdo** | Agarra o objeto/pessoa sob a mira. Clique de novo para soltar |
 | **Botão direito (segurar)** | Carrega a força do arremesso. **Solte** para arremessar. Uma linha mostra onde vai cair |
 | **Scroll** | Aproxima/afasta o objeto |
-| **Q / E**, **Z / X** | Giram / inclinam o objeto |
+| **Z / X**, **C / V** | Giram / inclinam o objeto |
 | **1 – 7** | Habilidades (liberam por nível) |
 | **Shift** | Correr |
 | **Espaço** | Pular · levantar do chão · **escapar quando te agarram (aperte várias vezes)** |
 | **G** | Solta tudo |
 | **M** | Menu (loja, habilidades, cabo, recordes, ajustes, ajuda) |
-| **E** | Interagir (loja, caça-moedas, canhões, baús) |
+| **E** | Interagir (loja, caça-moedas, canhões, baús, reivindicar casa) |
+| **H / B / N** | Emotes: acenar, comemorar, dançar (todos veem) |
 | Controle | R1 agarra · R2 carrega/arremessa · D-pad distância |
 | Celular | Toque no objeto; botões ARREMESSAR (segure), AGARRAR/SOLTAR e ± distância |
 
@@ -53,6 +54,9 @@ rojo serve                                                # ou sincroniza ao viv
   Vulcão Furioso + deserto, Praia dos Ventos, Caverna de Cristal, 5 ilhas flutuantes, lagos, estradas, mar.
 - **Atividades**: Tiro ao Alvo, Cestas, Boliche Gigante, **Arena do Caos** (ondas de robôs rolantes),
   **Golem Sucata** (chefão co-op), **eventos**: chuva de meteoros, gravidade lunar, chuva de moedas, erupção, hora do ouro.
+- **Missões**: 3 missões ativas por vez (arremessar longe, acertar pessoas, arena, chefão...), com XP e moedas — aba Missões no menu (M) e painel na tela.
+- **Vila dos Jogadores**: 8 casinhas para reivindicar e pintar; dentro do lote ninguém consegue te agarrar.
+- **Emotes** procedurais (acenar, comemorar, dançar) feitos com Motor6D, sem assets de animação.
 - **Canhões expressos**, tubos de vento até as ilhas, jump pads, gêiseres, caça-moedas, baús, picos para conquistar.
 - **Ciclo dia/noite**, iluminação Future, animações procedurais de braços/tronco e do cenário.
 - **Multiplayer**: tudo validado no servidor (distância, massa, velocidade máxima, recargas).
@@ -78,6 +82,7 @@ Não tenho como abrir o Studio na máquina de desenvolvimento, então o projeto 
 cd tools && npm install
 node check.mjs          # analisador oficial do Luau (WASM) + definições reais da API do Roblox
 node api-check.mjs      # confere se todo método/propriedade usado existe na API do Roblox
+node enum-check.mjs     # confere se todo Enum.Tipo.Valor usado existe de verdade
 node sim/smoke.mjs      # roda o servidor inteiro num mock do Roblox (mundo, agarrar, loja, arena, chefão...)
 node sim/smoke-client.mjs   # roda o cliente inteiro (HUD, menu, efeitos, agarrar/arremessar)
 node sim/heightmap.mjs mapa.png   # desenha o mapa do mundo

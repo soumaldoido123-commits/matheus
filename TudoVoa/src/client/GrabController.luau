@@ -4,7 +4,7 @@
 	  - Mira (mouse livre; ao segurar algo a mira trava no centro, estilo terceira pessoa)
 	  - Agarra objetos e pessoas (o servidor valida e entrega a fisica ao jogador)
 	  - Segura com AlignPosition/AlignOrientation locais (o cliente e dono da fisica)
-	  - Roda o mouse (scroll) muda a distancia; Q/E/Z/X giram o objeto
+	  - Roda o mouse (scroll) muda a distancia; Z/X giram e C/V inclinam o objeto
 	  - Botao direito: carrega a forca (com trajetoria prevista) e solta = arremessa
 	  - Dois cabos (upgrade), controle (gamepad) e botoes de celular
 ]]
@@ -534,8 +534,8 @@ local function update(dt: number)
 		end
 
 		-- rotacao do objeto pelo teclado
-		local ry = (UserInputService:IsKeyDown(Enum.KeyCode.E) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Q) and 1 or 0)
-		local rx = (UserInputService:IsKeyDown(Enum.KeyCode.X) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Z) and 1 or 0)
+		local ry = (UserInputService:IsKeyDown(Enum.KeyCode.X) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Z) and 1 or 0)
+		local rx = (UserInputService:IsKeyDown(Enum.KeyCode.V) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.C) and 1 or 0)
 
 		local origin = cam.CFrame.Position
 		updateFilter()

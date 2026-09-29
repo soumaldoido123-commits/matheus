@@ -264,12 +264,22 @@ local function handleGrab(player: Player, part: any)
 		since = os.clock(),
 	}
 
-	Physics.setOwner(target, player)
-	Physics.setGroup(target, Config.Groups.Held)
+	-- reserva o alvo ja (evita dois jogadores agarrarem ao mesmo tempo durante a pausa abaixo)
 	root:SetAttribute("HeldBy", player.UserId)
 	if kind == "character" then
 		model:SetAttribute("HeldBy", player.UserId)
+		-- primeiro vira ragdoll (as partes viram montagens separadas), so depois entrega a fisica
+		Ragdoll.enable(model, { duration = 1, held = true })
+		task.wait(0.06)
+		if not model.Parent or not root.Parent or (player.Character ~= char) then
+			root:SetAttribute("HeldBy", nil)
+			model:SetAttribute("HeldBy", nil)
+			Ragdoll.setHeld(model, false)
+			return false, "O alvo sumiu"
+		end
 	end
+	Physics.setOwner(target, player, kind == "character")
+	Physics.setGroup(target, Config.Groups.Held)
 
 	local ov = Instance.new("ObjectValue")
 	ov.Name = "Hold"
@@ -285,7 +295,6 @@ local function handleGrab(player: Player, part: any)
 	byKey[root] = hold
 
 	if kind == "character" then
-		Ragdoll.enable(model, { duration = 1, held = true })
 		if targetPlayer then
 			struggles[targetPlayer] = { value = 0, last = 0, hold = hold }
 			Remotes.get("HoldedBy"):FireClient(targetPlayer, player.DisplayName, 0)

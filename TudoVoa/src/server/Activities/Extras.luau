@@ -47,7 +47,29 @@ function handlers.boomerang(player, action, part)
 	end
 end
 
+local lastEmote = {}
+local EMOTES = { wave = true, cheer = true, dance = true }
+
+function handlers.emote(player, action)
+	if type(action) ~= "string" or not EMOTES[action] then
+		return
+	end
+	local now = os.clock()
+	if lastEmote[player] and now - lastEmote[player] < 0.8 then
+		return
+	end
+	lastEmote[player] = now
+	local char = player.Character
+	if char then
+		char:SetAttribute("Emote", action)
+		char:SetAttribute("EmoteT", workspace:GetServerTimeNow())
+	end
+end
+
 function Extras.init()
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		lastEmote[p] = nil
+	end)
 	Remotes.get("ActivityAction").OnServerEvent:Connect(function(player, activity, action, arg)
 		if type(activity) ~= "string" or type(action) ~= "string" then
 			return

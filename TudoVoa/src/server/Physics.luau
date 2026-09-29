@@ -72,7 +72,7 @@ end
 
 -- Dono da fisica para todas as partes soltas de um modelo/parte.
 -- player = nil devolve para o servidor.
-function Physics.setOwner(target: Instance, player: Player?)
+function Physics.setOwner(target: Instance, player: Player?, deep: boolean?)
 	local function apply(p: BasePart)
 		if p.Anchored then
 			return
@@ -82,12 +82,12 @@ function Physics.setOwner(target: Instance, player: Player?)
 		end)
 	end
 	if target:IsA("BasePart") then
-		if target.AssemblyRootPart == target then
+		if deep or target.AssemblyRootPart == target then
 			apply(target)
 		end
 	end
 	for _, d in target:GetDescendants() do
-		if d:IsA("BasePart") and d.AssemblyRootPart == d then
+		if d:IsA("BasePart") and (deep or d.AssemblyRootPart == d) then
 			apply(d)
 		end
 	end
@@ -106,7 +106,7 @@ function Physics.setOwnerAuto(target: Instance)
 		apply(target)
 	end
 	for _, d in target:GetDescendants() do
-		if d:IsA("BasePart") and d.AssemblyRootPart == d then
+		if d:IsA("BasePart") then
 			apply(d)
 		end
 	end

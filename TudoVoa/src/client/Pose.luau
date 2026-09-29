@@ -13,14 +13,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Util = require(Shared:WaitForChild("Util"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Tether = require(script.Parent:WaitForChild("Tether"))
 local GrabController = require(script.Parent:WaitForChild("GrabController"))
 
 local Pose = {}
 
+local UserInputService = game:GetService("UserInputService")
+
+local EMOTE_DURATION = { wave = 2.6, cheer = 2.4, dance = 5 }
+local EMOTE_KEYS = {
+	[Enum.KeyCode.H] = "wave",
+	[Enum.KeyCode.B] = "cheer",
+	[Enum.KeyCode.N] = "dance",
+}
+
 local player = Players.LocalPlayer
 local states = {} -- [character] = state
+local failedAt = setmetatable({}, { __mode = "k" }) -- [character] = quando a montagem do rig falhou
 
 local UP = Vector3.yAxis
 
@@ -62,6 +73,7 @@ local function getState(char: Model)
 	end
 	local rig = buildRig(char)
 	if not rig then
+		failedAt[char] = os.clock()
 		return nil
 	end
 	st = {
@@ -78,6 +90,12 @@ local function getState(char: Model)
 	char:GetAttributeChangedSignal("ThrowT"):Connect(function()
 		st.kick.Position = 1
 		st.kick.Velocity = 6
+	end)
+	char:GetAttributeChangedSignal("EmoteT"):Connect(function()
+		local name = char:GetAttribute("Emote")
+		if EMOTE_DURATION[name] and (not st.emote or os.clock() - st.emote.t0 > 0.5) then
+			st.emote = { name = name, t0 = os.clock() }
+		end
 	end)
 	return st
 end
@@ -131,7 +149,13 @@ local function stepChar(char: Model, st, dt: number)
 	end
 
 	local holding = targetPos ~= nil
-	st.weight.Target = (holding or st.kick.Position > 0.02) and 1 or 0
+	local emote = st.emote
+	local emoteAge = emote and (os.clock() - emote.t0) or 0
+	if emote and emoteAge > EMOTE_DURATION[emote.name] then
+		st.emote = nil
+		emote = nil
+	end
+	st.weight.Target = (holding or emote or st.kick.Position > 0.02) and 1 or 0
 	local w = st.weight:Step(dt)
 	st.kick:Step(dt)
 	w = math.clamp(w, 0, 1)
@@ -150,8 +174,45 @@ local function stepChar(char: Model, st, dt: number)
 
 	local kick = math.clamp(st.kick.Position, -1.2, 1.4)
 
+	-- emotes: direcoes dos bracos e giro do tronco
+	local emoteDir = nil
+	local emoteYaw = 0
+	if emote and not holding then
+		local rightV = hrp and hrp.CFrame.RightVector or Vector3.xAxis
+		local t = emoteAge
+		local fade = math.clamp(math.min(t * 6, (EMOTE_DURATION[emote.name] - t) * 6), 0, 1)
+		if emote.name == "wave" then
+			emoteDir = {
+				right = (UP * 0.9 + rightV * 0.32 * math.sin(t * 11) + look * 0.15).Unit,
+			}
+		elseif emote.name == "cheer" then
+			local wob = math.sin(t * 9) * 0.18
+			emoteDir = {
+				right = (UP + rightV * (0.25 + wob)).Unit,
+				left = (UP - rightV * (0.25 - wob)).Unit,
+			}
+		elseif emote.name == "dance" then
+			local s = math.sin(t * 7)
+			emoteDir = {
+				right = (UP * (0.4 + 0.6 * math.max(s, 0)) + rightV * 0.5 + look * 0.4 * (1 - math.max(s, 0))).Unit,
+				left = (UP * (0.4 + 0.6 * math.max(-s, 0)) - rightV * 0.5 + look * 0.4 * (1 - math.max(-s, 0))).Unit,
+			}
+			emoteYaw = s * 0.45
+		end
+		if emoteDir then
+			emoteDir.fade = fade
+		end
+	end
+
 	for side, info in { right = st.rig.right, left = st.rig.left } do
-		if info then
+		if info and emoteDir then
+			local d = emoteDir[side]
+			if d then
+				pointArm(info, d, w * emoteDir.fade)
+			else
+				restore(info)
+			end
+		elseif info then
 			local from = shoulderWorld(info)
 			local to = targetPos or st.lastTarget or (from + look * 8)
 			local dir = (to - from)
@@ -173,13 +234,39 @@ local function stepChar(char: Model, st, dt: number)
 	-- tronco: gira para tras ao carregar e "chicoteia" no arremesso
 	local wa = st.rig.waist
 	if wa and wa.m.Parent then
-		local yaw = -chargeAmt * 0.55 + kick * 0.6
+		local yaw = -chargeAmt * 0.55 + kick * 0.6 + emoteYaw
 		local lean = holding and 0.08 or 0
 		wa.m.C0 = wa.c0 * CFrame.Angles(-lean - chargeAmt * 0.12, yaw, 0)
 	end
 end
 
+-- toca um emote no jogador local (e avisa o servidor para todos verem)
+function Pose.emote(name: string)
+	if not EMOTE_DURATION[name] then
+		return
+	end
+	local char = player.Character
+	local st = char and getState(char)
+	if not st then
+		return
+	end
+	if st.emote and os.clock() - st.emote.t0 < 0.6 then
+		return
+	end
+	st.emote = { name = name, t0 = os.clock() }
+	Remotes.get("ActivityAction"):FireServer("emote", name)
+end
+
 function Pose.init()
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed or input.UserInputType ~= Enum.UserInputType.Keyboard then
+			return
+		end
+		local name = EMOTE_KEYS[input.KeyCode]
+		if name and not GrabController.isHolding() then
+			Pose.emote(name)
+		end
+	end)
 	GrabController.Changed:Connect(function(event)
 		if event == "throw" then
 			local char = player.Character
@@ -198,9 +285,15 @@ function Pose.init()
 				getState(char)
 			end
 		end
-		local lp = player.Character
-		if lp and not states[lp] then
-			getState(lp)
+		-- todos os personagens precisam de estado para ver os emotes dos outros
+		for _, pl in Players:GetPlayers() do
+			local c = pl.Character
+			if c and c.Parent and not states[c] and c:FindFirstChildOfClass("Humanoid") then
+				local f = failedAt[c]
+				if not f or os.clock() - f > 2 then
+					getState(c)
+				end
+			end
 		end
 		for char, st in states do
 			if not char.Parent then

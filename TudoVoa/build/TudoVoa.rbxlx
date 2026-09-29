@@ -158,8 +158,8 @@ Config.Grab = {
 	HoldMaxBase = 26,
 	HoldMaxPerLevel = 4,
 	ScrollStep = 2.5,
-	MaxMassBase = 900, -- massa maxima agarravel
-	MaxMassPerLevel = 700, -- por nivel do upgrade "Força"
+	MaxMassBase = 300, -- massa maxima agarravel
+	MaxMassPerLevel = 350, -- por nivel do upgrade "Força"
 	Responsiveness = 55,
 	MaxVelocity = 190,
 	OrientResponsiveness = 32,
@@ -175,7 +175,7 @@ Config.Throw = {
 	ChargeTime = 1.15, -- segundos para carga total
 	MinCharge = 0.12,
 	RefMass = 14, -- massa "normal": objetos mais pesados saem mais devagar
-	MassExponent = 0.42,
+	MassExponent = 0.34,
 	PowerPerLevel = 0.08, -- +8% de forca por nivel do upgrade "Potência"
 	MaxSpeedHard = 420, -- teto absoluto aceito pelo servidor
 	Spin = 9, -- rotacao aleatoria aplicada no arremesso
@@ -1577,7 +1577,7 @@ local KINDS = {
 	basic = { size = 4.2, density = 1.2, color = rgb(90, 190, 255), accel = 46, maxSpeed = 24, bump = 60, name = "Robô" },
 	jumper = { size = 3.6, density = 1.0, color = rgb(255, 180, 60), accel = 40, maxSpeed = 22, bump = 55, hop = true, name = "Saltador" },
 	tank = { size = 7, density = 2.6, color = rgb(255, 90, 100), accel = 34, maxSpeed = 18, bump = 90, name = "Tanque" },
-	boss = { size = 12, density = 3.4, color = rgb(190, 90, 255), accel = 30, maxSpeed = 15, bump = 120, name = "Chefe Robô", boss = true },
+	boss = { size = 12, density = 2.6, color = rgb(190, 90, 255), accel = 30, maxSpeed = 15, bump = 120, name = "Chefe Robô", boss = true },
 }
 
 local function spawnBot(kind: string, pos: Vector3)
@@ -3293,7 +3293,29 @@ function handlers.boomerang(player, action, part)
 	end
 end
 
+local lastEmote = {}
+local EMOTES = { wave = true, cheer = true, dance = true }
+
+function handlers.emote(player, action)
+	if type(action) ~= "string" or not EMOTES[action] then
+		return
+	end
+	local now = os.clock()
+	if lastEmote[player] and now - lastEmote[player] < 0.8 then
+		return
+	end
+	lastEmote[player] = now
+	local char = player.Character
+	if char then
+		char:SetAttribute("Emote", action)
+		char:SetAttribute("EmoteT", workspace:GetServerTimeNow())
+	end
+end
+
 function Extras.init()
+	game:GetService("Players").PlayerRemoving:Connect(function(p)
+		lastEmote[p] = nil
+	end)
 	Remotes.get("ActivityAction").OnServerEvent:Connect(function(player, activity, action, arg)
 		if type(activity) ~= "string" or type(action) ~= "string" then
 			return
@@ -3422,6 +3444,178 @@ return Hoops
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="19">
+          <Properties>
+            <string name="Name">Plots</string>
+            <string name="Source"><![CDATA[--!nonstrict
+--[[
+	Plots: "Vila dos Jogadores" — casinhas que cada jogador pode reivindicar.
+	Dentro de um lote ninguem consegue agarrar ninguem (zona segura). O dono pode pintar a casa.
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
+
+local Server = script.Parent.Parent
+local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
+local Zones = require(Server:WaitForChild("Zones"))
+
+local Plots = {}
+
+local M = Enum.Material
+local P = Config.Palette
+local function rgb(r, g, b)
+	return Color3.fromRGB(r, g, b)
+end
+
+local PALETTE = {
+	rgb(255, 214, 200), rgb(200, 232, 255), rgb(214, 255, 210), rgb(255, 240, 180),
+	rgb(236, 210, 255), rgb(255, 196, 226), rgb(200, 255, 244), rgb(255, 224, 170),
+}
+local ROOFS = { rgb(220, 80, 90), rgb(70, 110, 200), rgb(90, 160, 90), rgb(230, 150, 50), rgb(140, 90, 200), rgb(220, 90, 160), rgb(60, 170, 170), rgb(200, 110, 60) }
+
+local plots = {}
+
+local function refresh(plot)
+	local owner = plot.owner
+	if owner then
+		plot.pp.ActionText = "Visitar (dono: pintar)"
+		plot.pp.ObjectText = "Casa de " .. owner.DisplayName
+		plot.sign.Text = "🏠 " .. owner.DisplayName
+	else
+		plot.pp.ActionText = "Reivindicar casa"
+		plot.pp.ObjectText = "Lote livre"
+		plot.sign.Text = "LOTE LIVRE\n[E] reivindicar"
+	end
+end
+
+local function release(player: Player)
+	for _, plot in plots do
+		if plot.owner == player then
+			plot.owner = nil
+			plot.colorIndex = plot.baseIndex
+			plot.body.Color = PALETTE[plot.colorIndex]
+			refresh(plot)
+		end
+	end
+end
+
+local function ownedBy(player: Player)
+	for _, plot in plots do
+		if plot.owner == player then
+			return plot
+		end
+	end
+	return nil
+end
+
+local function makePlot(folder: Folder, center: Vector3, faceTo: Vector3, index: number)
+	local samples = {}
+	for dx = -18, 18, 9 do
+		for dz = -18, 18, 9 do
+			table.insert(samples, Build.y(center.X + dx, center.Z + dz))
+		end
+	end
+	local top, low = -1e9, 1e9
+	for _, y in samples do
+		top = math.max(top, y)
+		low = math.min(low, y)
+	end
+	local floorY = top + 0.6
+	local pos = Vector3.new(center.X, floorY, center.Z)
+	-- o "fundo" (-Z) do lote aponta para longe do centro da vila; a frente (+Z, com portao/correio) olha para ele
+	local cf = CFrame.lookAt(pos, Vector3.new(2 * pos.X - faceTo.X, floorY, 2 * pos.Z - faceTo.Z))
+	local m = Build.model(folder, "Plot" .. index)
+
+	-- gramado
+	local depth = floorY - low + 6
+	Build.block(m, cf * CFrame.new(0, -depth / 2, 0), Vector3.new(42, depth, 42), rgb(120, 96, 80), M.Ground)
+	Build.block(m, cf * CFrame.new(0, 0.1, 0), Vector3.new(42, 0.4, 42), rgb(104, 212, 72), M.Grass)
+	-- calçada
+	Build.block(m, cf * CFrame.new(0, 0.35, 12), Vector3.new(6, 0.3, 24), rgb(200, 196, 210), M.Cobblestone, { collide = false })
+
+	-- casa (fundos do lote)
+	local house = Build.house(m, cf * CFrame.new(0, 0, -8), Vector3.new(18, 11, 14), PALETTE[index], ROOFS[index], "House")
+	local body = house.PrimaryPart
+
+	-- cerca em volta (com portao aberto na frente)
+	local function fence(from: Vector3, to: Vector3)
+		local mid = (from + to) / 2
+		local len = (to - from).Magnitude
+		local look = CFrame.lookAt(cf * mid, cf * to)
+		Build.block(m, look * CFrame.new(0, 1.6, 0), Vector3.new(0.5, 0.5, len), rgb(240, 236, 226), M.Wood, { collide = false })
+		Build.block(m, look * CFrame.new(0, 0.7, 0), Vector3.new(0.5, 0.5, len), rgb(240, 236, 226), M.Wood, { collide = false })
+	end
+	fence(Vector3.new(-20, 0, -20), Vector3.new(20, 0, -20))
+	fence(Vector3.new(-20, 0, -20), Vector3.new(-20, 0, 20))
+	fence(Vector3.new(20, 0, -20), Vector3.new(20, 0, 20))
+	fence(Vector3.new(-20, 0, 20), Vector3.new(-6, 0, 20))
+	fence(Vector3.new(6, 0, 20), Vector3.new(20, 0, 20))
+	for _, c in { Vector3.new(-20, 0, -20), Vector3.new(20, 0, -20), Vector3.new(-20, 0, 20), Vector3.new(20, 0, 20), Vector3.new(-6, 0, 20), Vector3.new(6, 0, 20) } do
+		Build.block(m, cf * CFrame.new(c.X, 1.2, c.Z), Vector3.new(0.9, 2.6, 0.9), rgb(210, 200, 190), M.Wood)
+	end
+
+	-- caixa de correio com placa
+	local post = Build.block(m, cf * CFrame.new(9, 1.4, 17), Vector3.new(0.6, 2.8, 0.6), rgb(120, 84, 52), M.Wood)
+	local board = Build.block(m, cf * CFrame.new(9, 4.2, 17), Vector3.new(7, 2.6, 0.4), rgb(40, 34, 90), M.SmoothPlastic)
+	local label = Build.label(board, "", { color = P.White, face = Enum.NormalId.Front, ppu = 40 })
+	local pp = Build.prompt(post, "Reivindicar casa", "Lote livre", "plot")
+	pp.MaxActivationDistance = 12
+
+	local plot = { owner = nil, body = body, sign = label, pp = pp, colorIndex = index, baseIndex = index, center = pos }
+	table.insert(plots, plot)
+	refresh(plot)
+	table.insert(Zones.SafeExtra, { center = pos + Vector3.new(0, 6, 0), radius = 32 })
+
+	pp.Triggered:Connect(function(player)
+		if not plot.owner then
+			if ownedBy(player) then
+				Remotes.get("Notify"):FireClient(player, "Você já tem uma casa!", "bad")
+				return
+			end
+			plot.owner = player
+			refresh(plot)
+			Remotes.get("Announce"):FireClient(player, "CASA SUA!", "Ninguém consegue agarrar você aqui dentro", 2.5, P.Green)
+			Remotes.get("Fx"):FireAllClients("confetti", pos + Vector3.new(0, 8, 0), 0.8, nil)
+		elseif plot.owner == player then
+			plot.colorIndex = plot.colorIndex % #PALETTE + 1
+			plot.body.Color = PALETTE[plot.colorIndex]
+			Remotes.get("Fx"):FireAllClients("spawn", pos + Vector3.new(0, 6, -8), 1, nil)
+		else
+			Remotes.get("Notify"):FireClient(player, "Casa de " .. plot.owner.DisplayName, "info")
+		end
+	end)
+end
+
+function Plots.init()
+	local folder = Build.folder("Plots")
+	-- vila a nordeste da praca, em arco, todas viradas para o centro da vila
+	local villageCenter = Vector3.new(170, 0, -175)
+	local n = 8
+	for i = 1, n do
+		local a = (i - 0.5) / n * math.pi * 1.5 + math.pi * 0.85
+		local pos = villageCenter + Vector3.new(math.cos(a) * 78, 0, math.sin(a) * 78)
+		makePlot(folder, pos, villageCenter, i)
+	end
+	-- praca da vila
+	local y = Build.y(villageCenter.X, villageCenter.Z)
+	Build.cyl(folder, CFrame.new(villageCenter.X, y + 0.2, villageCenter.Z), 1, 34, rgb(226, 218, 240), M.Marble)
+	Build.lamp(folder, Vector3.new(villageCenter.X, y + 0.7, villageCenter.Z), 14, rgb(255, 226, 150))
+	local sign = Build.block(folder, CFrame.new(villageCenter.X, y + 8, villageCenter.Z + 12), Vector3.new(16, 4, 0.5), rgb(40, 34, 90), M.SmoothPlastic)
+	Build.label(sign, "🏘️ VILA DOS JOGADORES", { color = P.Accent, face = Enum.NormalId.Front })
+	Build.foundation(folder, CFrame.new(villageCenter.X, y, villageCenter.Z + 12), Vector3.new(2, 1, 2))
+
+	Players.PlayerRemoving:Connect(release)
+end
+
+return Plots
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="20">
           <Properties>
             <string name="Name">Targets</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3612,7 +3806,7 @@ return Targets
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">Atmosphere</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -3716,7 +3910,7 @@ return Atmosphere
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">Blasts</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -3948,7 +4142,7 @@ return Blasts
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">Board</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -4078,7 +4272,7 @@ return Board
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">Data</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -4560,7 +4754,7 @@ return Data
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">Grab</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -4829,12 +5023,22 @@ local function handleGrab(player: Player, part: any)
 		since = os.clock(),
 	}
 
-	Physics.setOwner(target, player)
-	Physics.setGroup(target, Config.Groups.Held)
+	-- reserva o alvo ja (evita dois jogadores agarrarem ao mesmo tempo durante a pausa abaixo)
 	root:SetAttribute("HeldBy", player.UserId)
 	if kind == "character" then
 		model:SetAttribute("HeldBy", player.UserId)
+		-- primeiro vira ragdoll (as partes viram montagens separadas), so depois entrega a fisica
+		Ragdoll.enable(model, { duration = 1, held = true })
+		task.wait(0.06)
+		if not model.Parent or not root.Parent or (player.Character ~= char) then
+			root:SetAttribute("HeldBy", nil)
+			model:SetAttribute("HeldBy", nil)
+			Ragdoll.setHeld(model, false)
+			return false, "O alvo sumiu"
+		end
 	end
+	Physics.setOwner(target, player, kind == "character")
+	Physics.setGroup(target, Config.Groups.Held)
 
 	local ov = Instance.new("ObjectValue")
 	ov.Name = "Hold"
@@ -4850,7 +5054,6 @@ local function handleGrab(player: Player, part: any)
 	byKey[root] = hold
 
 	if kind == "character" then
-		Ragdoll.enable(model, { duration = 1, held = true })
 		if targetPlayer then
 			struggles[targetPlayer] = { value = 0, last = 0, hold = hold }
 			Remotes.get("HoldedBy"):FireClient(targetPlayer, player.DisplayName, 0)
@@ -5157,7 +5360,7 @@ return Grab
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">Impact</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5389,7 +5592,7 @@ return Impact
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">Physics</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5466,7 +5669,7 @@ end
 
 -- Dono da fisica para todas as partes soltas de um modelo/parte.
 -- player = nil devolve para o servidor.
-function Physics.setOwner(target: Instance, player: Player?)
+function Physics.setOwner(target: Instance, player: Player?, deep: boolean?)
 	local function apply(p: BasePart)
 		if p.Anchored then
 			return
@@ -5476,12 +5679,12 @@ function Physics.setOwner(target: Instance, player: Player?)
 		end)
 	end
 	if target:IsA("BasePart") then
-		if target.AssemblyRootPart == target then
+		if deep or target.AssemblyRootPart == target then
 			apply(target)
 		end
 	end
 	for _, d in target:GetDescendants() do
-		if d:IsA("BasePart") and d.AssemblyRootPart == d then
+		if d:IsA("BasePart") and (deep or d.AssemblyRootPart == d) then
 			apply(d)
 		end
 	end
@@ -5500,7 +5703,7 @@ function Physics.setOwnerAuto(target: Instance)
 		apply(target)
 	end
 	for _, d in target:GetDescendants() do
-		if d:IsA("BasePart") and d.AssemblyRootPart == d then
+		if d:IsA("BasePart") then
 			apply(d)
 		end
 	end
@@ -5640,7 +5843,7 @@ return Physics
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">Pickups</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5834,7 +6037,7 @@ return Pickups
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">Quests</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5952,7 +6155,7 @@ return Quests
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="29">
+      <Item class="ModuleScript" referent="30">
         <Properties>
           <string name="Name">Ragdoll</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6233,7 +6436,7 @@ return Ragdoll
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="30">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">Scoring</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6372,7 +6575,7 @@ return Scoring
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="31">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">Shop</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6508,7 +6711,7 @@ return Shop
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="32">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">ToyFactory</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6995,7 +7198,7 @@ return ToyFactory
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="33">
+      <Item class="ModuleScript" referent="34">
         <Properties>
           <string name="Name">ToyPassive</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -7158,7 +7361,7 @@ return ToyPassive
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="34">
+      <Item class="ModuleScript" referent="35">
         <Properties>
           <string name="Name">ToySpawner</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -7393,11 +7596,11 @@ return ToySpawner
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="35">
+      <Item class="Folder" referent="36">
         <Properties>
           <string name="Name">World</string>
         </Properties>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="37">
           <Properties>
             <string name="Name">Beach</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -7668,7 +7871,7 @@ return Beach
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="37">
+        <Item class="ModuleScript" referent="38">
           <Properties>
             <string name="Name">Build</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8099,7 +8302,7 @@ return Build
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">Cave</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8208,7 +8411,7 @@ return Cave
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">Farm</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8496,7 +8699,7 @@ return Farm
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="41">
           <Properties>
             <string name="Name">Hub</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8901,7 +9104,7 @@ return Hub
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="42">
           <Properties>
             <string name="Name">Interactive</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9106,7 +9309,7 @@ return Interactive
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">Nature</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9217,7 +9420,7 @@ return Nature
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">Scenery</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9362,7 +9565,7 @@ return Scenery
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">Sky</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9563,7 +9766,7 @@ return Sky
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">Snow</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9812,7 +10015,7 @@ return Snow
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">Volcano</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -10035,7 +10238,7 @@ return Volcano
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">WorldGen</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -10534,7 +10737,7 @@ return WorldGen
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="48">
+      <Item class="ModuleScript" referent="49">
         <Properties>
           <string name="Name">Zones</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -10676,17 +10879,17 @@ return Zones
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="49">
+  <Item class="StarterPlayer" referent="50">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <float name="CameraMaxZoomDistance">70</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="50">
+    <Item class="StarterPlayerScripts" referent="51">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="51">
+      <Item class="LocalScript" referent="52">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -10806,7 +11009,7 @@ task.spawn(function()
 end)
 ]]></string>
         </Properties>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">AbilityBar</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11163,11 +11366,11 @@ return AbilityBar
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="53">
+        <Item class="Folder" referent="54">
           <Properties>
             <string name="Name">Activities</string>
           </Properties>
-          <Item class="ModuleScript" referent="54">
+          <Item class="ModuleScript" referent="55">
             <Properties>
               <string name="Name">ArenaUI</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11241,7 +11444,7 @@ return ArenaUI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="55">
+          <Item class="ModuleScript" referent="56">
             <Properties>
               <string name="Name">BossUI</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11319,7 +11522,7 @@ return BossUI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="56">
+          <Item class="ModuleScript" referent="57">
             <Properties>
               <string name="Name">EventBanner</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11387,7 +11590,7 @@ return EventBanner
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">Ambient</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11556,7 +11759,7 @@ return Ambient
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">Audio</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11652,7 +11855,7 @@ return Audio
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">DecorAnim</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11874,7 +12077,7 @@ return DecorAnim
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">Fx</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -12385,7 +12588,7 @@ return Fx
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">GrabController</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -12394,7 +12597,7 @@ return Fx
 	  - Mira (mouse livre; ao segurar algo a mira trava no centro, estilo terceira pessoa)
 	  - Agarra objetos e pessoas (o servidor valida e entrega a fisica ao jogador)
 	  - Segura com AlignPosition/AlignOrientation locais (o cliente e dono da fisica)
-	  - Roda o mouse (scroll) muda a distancia; Q/E/Z/X giram o objeto
+	  - Roda o mouse (scroll) muda a distancia; Z/X giram e C/V inclinam o objeto
 	  - Botao direito: carrega a forca (com trajetoria prevista) e solta = arremessa
 	  - Dois cabos (upgrade), controle (gamepad) e botoes de celular
 ]]
@@ -12924,8 +13127,8 @@ local function update(dt: number)
 		end
 
 		-- rotacao do objeto pelo teclado
-		local ry = (UserInputService:IsKeyDown(Enum.KeyCode.E) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Q) and 1 or 0)
-		local rx = (UserInputService:IsKeyDown(Enum.KeyCode.X) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Z) and 1 or 0)
+		local ry = (UserInputService:IsKeyDown(Enum.KeyCode.X) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.Z) and 1 or 0)
+		local rx = (UserInputService:IsKeyDown(Enum.KeyCode.V) and 1 or 0) - (UserInputService:IsKeyDown(Enum.KeyCode.C) and 1 or 0)
 
 		local origin = cam.CFrame.Position
 		updateFilter()
@@ -13178,7 +13381,7 @@ return GrabController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="62">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">Movement</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13477,7 +13680,7 @@ return Movement
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">Pose</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13495,14 +13698,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Util = require(Shared:WaitForChild("Util"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Tether = require(script.Parent:WaitForChild("Tether"))
 local GrabController = require(script.Parent:WaitForChild("GrabController"))
 
 local Pose = {}
 
+local UserInputService = game:GetService("UserInputService")
+
+local EMOTE_DURATION = { wave = 2.6, cheer = 2.4, dance = 5 }
+local EMOTE_KEYS = {
+	[Enum.KeyCode.H] = "wave",
+	[Enum.KeyCode.B] = "cheer",
+	[Enum.KeyCode.N] = "dance",
+}
+
 local player = Players.LocalPlayer
 local states = {} -- [character] = state
+local failedAt = setmetatable({}, { __mode = "k" }) -- [character] = quando a montagem do rig falhou
 
 local UP = Vector3.yAxis
 
@@ -13544,6 +13758,7 @@ local function getState(char: Model)
 	end
 	local rig = buildRig(char)
 	if not rig then
+		failedAt[char] = os.clock()
 		return nil
 	end
 	st = {
@@ -13560,6 +13775,12 @@ local function getState(char: Model)
 	char:GetAttributeChangedSignal("ThrowT"):Connect(function()
 		st.kick.Position = 1
 		st.kick.Velocity = 6
+	end)
+	char:GetAttributeChangedSignal("EmoteT"):Connect(function()
+		local name = char:GetAttribute("Emote")
+		if EMOTE_DURATION[name] and (not st.emote or os.clock() - st.emote.t0 > 0.5) then
+			st.emote = { name = name, t0 = os.clock() }
+		end
 	end)
 	return st
 end
@@ -13613,7 +13834,13 @@ local function stepChar(char: Model, st, dt: number)
 	end
 
 	local holding = targetPos ~= nil
-	st.weight.Target = (holding or st.kick.Position > 0.02) and 1 or 0
+	local emote = st.emote
+	local emoteAge = emote and (os.clock() - emote.t0) or 0
+	if emote and emoteAge > EMOTE_DURATION[emote.name] then
+		st.emote = nil
+		emote = nil
+	end
+	st.weight.Target = (holding or emote or st.kick.Position > 0.02) and 1 or 0
 	local w = st.weight:Step(dt)
 	st.kick:Step(dt)
 	w = math.clamp(w, 0, 1)
@@ -13632,8 +13859,45 @@ local function stepChar(char: Model, st, dt: number)
 
 	local kick = math.clamp(st.kick.Position, -1.2, 1.4)
 
+	-- emotes: direcoes dos bracos e giro do tronco
+	local emoteDir = nil
+	local emoteYaw = 0
+	if emote and not holding then
+		local rightV = hrp and hrp.CFrame.RightVector or Vector3.xAxis
+		local t = emoteAge
+		local fade = math.clamp(math.min(t * 6, (EMOTE_DURATION[emote.name] - t) * 6), 0, 1)
+		if emote.name == "wave" then
+			emoteDir = {
+				right = (UP * 0.9 + rightV * 0.32 * math.sin(t * 11) + look * 0.15).Unit,
+			}
+		elseif emote.name == "cheer" then
+			local wob = math.sin(t * 9) * 0.18
+			emoteDir = {
+				right = (UP + rightV * (0.25 + wob)).Unit,
+				left = (UP - rightV * (0.25 - wob)).Unit,
+			}
+		elseif emote.name == "dance" then
+			local s = math.sin(t * 7)
+			emoteDir = {
+				right = (UP * (0.4 + 0.6 * math.max(s, 0)) + rightV * 0.5 + look * 0.4 * (1 - math.max(s, 0))).Unit,
+				left = (UP * (0.4 + 0.6 * math.max(-s, 0)) - rightV * 0.5 + look * 0.4 * (1 - math.max(-s, 0))).Unit,
+			}
+			emoteYaw = s * 0.45
+		end
+		if emoteDir then
+			emoteDir.fade = fade
+		end
+	end
+
 	for side, info in { right = st.rig.right, left = st.rig.left } do
-		if info then
+		if info and emoteDir then
+			local d = emoteDir[side]
+			if d then
+				pointArm(info, d, w * emoteDir.fade)
+			else
+				restore(info)
+			end
+		elseif info then
 			local from = shoulderWorld(info)
 			local to = targetPos or st.lastTarget or (from + look * 8)
 			local dir = (to - from)
@@ -13655,13 +13919,39 @@ local function stepChar(char: Model, st, dt: number)
 	-- tronco: gira para tras ao carregar e "chicoteia" no arremesso
 	local wa = st.rig.waist
 	if wa and wa.m.Parent then
-		local yaw = -chargeAmt * 0.55 + kick * 0.6
+		local yaw = -chargeAmt * 0.55 + kick * 0.6 + emoteYaw
 		local lean = holding and 0.08 or 0
 		wa.m.C0 = wa.c0 * CFrame.Angles(-lean - chargeAmt * 0.12, yaw, 0)
 	end
 end
 
+-- toca um emote no jogador local (e avisa o servidor para todos verem)
+function Pose.emote(name: string)
+	if not EMOTE_DURATION[name] then
+		return
+	end
+	local char = player.Character
+	local st = char and getState(char)
+	if not st then
+		return
+	end
+	if st.emote and os.clock() - st.emote.t0 < 0.6 then
+		return
+	end
+	st.emote = { name = name, t0 = os.clock() }
+	Remotes.get("ActivityAction"):FireServer("emote", name)
+end
+
 function Pose.init()
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if processed or input.UserInputType ~= Enum.UserInputType.Keyboard then
+			return
+		end
+		local name = EMOTE_KEYS[input.KeyCode]
+		if name and not GrabController.isHolding() then
+			Pose.emote(name)
+		end
+	end)
 	GrabController.Changed:Connect(function(event)
 		if event == "throw" then
 			local char = player.Character
@@ -13680,9 +13970,15 @@ function Pose.init()
 				getState(char)
 			end
 		end
-		local lp = player.Character
-		if lp and not states[lp] then
-			getState(lp)
+		-- todos os personagens precisam de estado para ver os emotes dos outros
+		for _, pl in Players:GetPlayers() do
+			local c = pl.Character
+			if c and c.Parent and not states[c] and c:FindFirstChildOfClass("Humanoid") then
+				local f = failedAt[c]
+				if not f or os.clock() - f > 2 then
+					getState(c)
+				end
+			end
 		end
 		for char, st in states do
 			if not char.Parent then
@@ -13702,7 +13998,7 @@ return Pose
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="64">
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">Store</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13823,7 +14119,7 @@ return Store
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="65">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">Tether</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -14056,7 +14352,7 @@ return Tether
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="66">
+        <Item class="ModuleScript" referent="67">
           <Properties>
             <string name="Name">ToyPhysics</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -14289,7 +14585,7 @@ return ToyPhysics
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="67">
+        <Item class="ModuleScript" referent="68">
           <Properties>
             <string name="Name">Trajectory</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -14408,11 +14704,11 @@ return Trajectory
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="68">
+        <Item class="Folder" referent="69">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">HUD</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14882,7 +15178,7 @@ return HUD
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">Loading</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14908,7 +15204,7 @@ local TIPS = {
 	"Clique em um objeto para agarrar. Clique com o botão direito e segure para carregar a força!",
 	"Role o mouse enquanto segura algo para aproximar ou afastar.",
 	"Pessoas também podem ser agarradas... e elas esperneiam! (Espaço repetido para escapar)",
-	"Q/E giram o objeto, Z/X inclinam. Mire com cuidado!",
+	"Z/X giram o objeto, C/V inclinam. Mire com cuidado!",
 	"Suba de nível para desbloquear habilidades: Puxão, Impulso, Estase, Onda de Choque...",
 	"Estase congela objetos no ar: empilhe e construa escadas!",
 	"O Caça-Moedas na praça dá um prêmio a cada 15 minutos.",
@@ -15040,7 +15336,7 @@ return Loading
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="71">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">Menu</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15469,11 +15765,13 @@ buildTab.help = function()
 		{ "🖱️ Clique esquerdo", "Agarra o objeto ou a pessoa sob a mira. Clique de novo para soltar." },
 		{ "🖱️ Botão direito (segurar)", "Carrega a força do arremesso. Solte para arremessar. Uma linha mostra onde vai cair." },
 		{ "🖲️ Scroll", "Aproxima ou afasta o objeto que você está segurando." },
-		{ "⌨️ Q / E   Z / X", "Gira e inclina o objeto (só enquanto segura)." },
+		{ "⌨️ Z / X   C / V", "Gira (Z/X) e inclina (C/V) o objeto — só enquanto segura." },
 		{ "⌨️ 1 a 7", "Usa as habilidades (liberadas por nível)." },
 		{ "⌨️ Shift", "Correr.   Espaço: pular / levantar do chão / escapar quando te agarram (aperte várias vezes)." },
 		{ "⌨️ G", "Solta tudo que está segurando." },
 		{ "⌨️ M", "Abre e fecha este menu." },
+		{ "⌨️ H · B · N", "Emotes: acenar · comemorar · dançar (todos veem)." },
+		{ "⌨️ J", "Recolhe/expande a lista de missões." },
 		{ "🎮 Controle", "R1 agarra/solta · R2 carrega e arremessa · D-pad ajusta a distância." },
 		{ "📱 Celular", "Toque num objeto para agarrar. Use os botões ARREMESSAR (segure), SOLTAR e ± distância." },
 		{ "💡 Dica", "Arremessos longos dão moedas, XP e recordes. Combos multiplicam os ganhos. Explore os tubos de vento para chegar às ilhas!" },
@@ -15621,7 +15919,7 @@ return Menu
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="72">
+          <Item class="ModuleScript" referent="73">
             <Properties>
               <string name="Name">Mobile</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15703,7 +16001,7 @@ return Mobile
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="73">
+          <Item class="ModuleScript" referent="74">
             <Properties>
               <string name="Name">QuestPanel</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15805,7 +16103,7 @@ return QuestPanel
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="74">
+          <Item class="ModuleScript" referent="75">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -16018,7 +16316,7 @@ return Theme
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="75">
+          <Item class="ModuleScript" referent="76">
             <Properties>
               <string name="Name">Tutorial</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -16107,7 +16405,7 @@ return Tutorial
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="76">
+  <Item class="Workspace" referent="77">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

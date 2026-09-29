@@ -91,7 +91,7 @@ for _, modName in { "Data", "Physics", "Ragdoll", "Scoring", "Board", "Blasts", 
 	end)
 end
 
-for _, modName in { "Targets", "Hoops", "Bowling", "Arena", "Boss", "Events", "Extras" } do
+for _, modName in { "Targets", "Hoops", "Bowling", "Plots", "Arena", "Boss", "Events", "Extras" } do
 	try("atividade " .. modName, function()
 		R(modName).init()
 	end)
