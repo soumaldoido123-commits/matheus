@@ -14,6 +14,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Data = require(script.Parent:WaitForChild("Data"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Pickups = {}
 
@@ -83,6 +84,7 @@ end
 local function collect(rec, player: Player)
 	Data.addCoins(player, rec.value)
 	Data.addXP(player, math.max(1, math.floor(rec.value / 3)))
+	Quests.report(player, "coin", rec.value)
 	Remotes.get("Fx"):FireClient(player, "coin", rec.part.Position, 1, nil)
 	if rec.static then
 		rec.part.Parent = nil

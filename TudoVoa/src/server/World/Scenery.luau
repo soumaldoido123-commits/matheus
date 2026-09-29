@@ -60,9 +60,18 @@ local function expressCannons(folder: Folder)
 	end
 end
 
+-- Roda uma etapa protegida: se falhar, avisa no Output e o resto do mundo continua.
+local function stage(name: string, fn: (...any) -> ...any, ...)
+	local ok, err = xpcall(fn, debug.traceback, ...)
+	if not ok then
+		warn("[Mundo] etapa '" .. name .. "' falhou:\n" .. tostring(err))
+	end
+	return ok
+end
+
 function Scenery.build()
 	setProgress(0, "Gerando terreno...")
-	WorldGen.build(function(p)
+	stage("terreno", WorldGen.build, function(p)
 		setProgress(p * 0.55, "Gerando terreno...")
 	end)
 
@@ -73,27 +82,27 @@ function Scenery.build()
 	end
 
 	setProgress(0.58, "Construindo a praça...")
-	Hub.build()
+	stage("praca", Hub.build)
 	task.wait()
 	setProgress(0.64, "Plantando a fazenda...")
-	Farm.build(rng, addSlot)
+	stage("fazenda", Farm.build, rng, addSlot)
 	task.wait()
 	setProgress(0.70, "Cobrindo a montanha de neve...")
-	Snow.build(rng, addSlot)
+	stage("montanha", Snow.build, rng, addSlot)
 	task.wait()
 	setProgress(0.76, "Acendendo o vulcão...")
-	Volcano.build(rng, addSlot)
+	stage("vulcao", Volcano.build, rng, addSlot)
 	task.wait()
 	setProgress(0.82, "Molhando a praia...")
-	Beach.build(rng, addSlot)
+	stage("praia", Beach.build, rng, addSlot)
 	task.wait()
 	setProgress(0.87, "Levantando as ilhas...")
-	Sky.build(rng, addSlot)
+	stage("ilhas", Sky.build, rng, addSlot)
 	task.wait()
 	setProgress(0.90, "Iluminando a caverna...")
-	Cave.build(rng, addSlot)
+	stage("caverna", Cave.build, rng, addSlot)
 
-	expressCannons(Build.folder("Cannons"))
+	stage("canhoes", expressCannons, Build.folder("Cannons"))
 
 	-- brinquedos na praca (fora da zona segura) e moedas soltas
 	local hubY = Build.y(0, 0)

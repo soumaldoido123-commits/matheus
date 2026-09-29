@@ -463,7 +463,7 @@ local function throwAll()
 end
 
 local function beginCharge()
-	if #holds == 0 or GrabController.charging then
+	if #holds == 0 or GrabController.charging or HUD.menuOpen then
 		return
 	end
 	GrabController.charging = true
@@ -498,8 +498,8 @@ local function update(dt: number)
 	end
 	local c = character()
 
-	-- caiu no ragdoll com coisas na mao: solta
-	if c:GetAttribute("Ragdolled") and #holds > 0 then
+	-- caiu no ragdoll (ou abriu o menu) com coisas na mao: solta
+	if (c:GetAttribute("Ragdolled") or HUD.menuOpen) and #holds > 0 then
 		dropAll()
 	end
 
@@ -623,7 +623,7 @@ end
 local tryGrabSecond
 
 local function onInputBegan(input: InputObject, processed: boolean)
-	if processed then
+	if processed or HUD.menuOpen then
 		return
 	end
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then

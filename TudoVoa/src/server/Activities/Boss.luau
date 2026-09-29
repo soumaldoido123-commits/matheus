@@ -25,6 +25,7 @@ local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local WorldGen = require(Server:WaitForChild("World"):WaitForChild("WorldGen"))
 local Interactive = require(Server:WaitForChild("World"):WaitForChild("Interactive"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Physics = require(Server:WaitForChild("Physics"))
 local Ragdoll = require(Server:WaitForChild("Ragdoll"))
 local Blasts = require(Server:WaitForChild("Blasts"))
@@ -239,6 +240,7 @@ local function damage(amount: number, player: Player?)
 	golem.hp -= amount
 	if player then
 		golem.damageBy[player.UserId] = (golem.damageBy[player.UserId] or 0) + amount
+		Quests.report(player, "boss", amount)
 	end
 	-- fases
 	local frac = golem.hp / golem.maxHp

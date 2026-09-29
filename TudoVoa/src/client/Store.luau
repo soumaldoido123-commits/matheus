@@ -36,6 +36,7 @@ local data = {
 	Trail = "Nenhum",
 	Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = false },
 	Wins = 0,
+	Quests = { slots = {}, completed = 0 },
 }
 
 function Store.get(key: string): any

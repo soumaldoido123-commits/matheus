@@ -281,6 +281,44 @@ return Config
       </Item>
       <Item class="ModuleScript" referent="5">
         <Properties>
+          <string name="Name">QuestDefs</string>
+          <string name="Source"><![CDATA[--!nonstrict
+--[[
+	Missoes: 3 ativas por jogador. Ao completar, paga moedas + XP e sorteia outra.
+	kind = o tipo de evento que conta progresso (os modulos do servidor chamam Quests.report).
+]]
+
+local QuestDefs = {}
+
+QuestDefs.SlotCount = 3
+
+QuestDefs.List = {
+	{ id = "throws10", kind = "throw", goal = 10, text = "Arremesse 10 objetos longe (40+ studs)", coins = 70, xp = 90, icon = "🎯" },
+	{ id = "far150", kind = "far", goal = 3, text = "Faça 3 arremessos acima de 150 studs", coins = 150, xp = 170, icon = "🚀", minLevel = 3 },
+	{ id = "far300", kind = "far300", goal = 1, text = "Arremesse a mais de 300 studs", coins = 320, xp = 300, icon = "🌠", minLevel = 7 },
+	{ id = "hits5", kind = "hit", goal = 5, text = "Acerte 5 pessoas ou robôs", coins = 110, xp = 130, icon = "💥", minLevel = 2 },
+	{ id = "targets5", kind = "target", goal = 5, text = "Acerte 5 alvos no Tiro ao Alvo", coins = 120, xp = 130, icon = "🏹" },
+	{ id = "hoops2", kind = "hoop", goal = 2, text = "Faça 2 cestas", coins = 140, xp = 150, icon = "🏀" },
+	{ id = "bots8", kind = "bot", goal = 8, text = "Derrube 8 robôs da Arena", coins = 190, xp = 210, icon = "🤖", minLevel = 4 },
+	{ id = "coins100", kind = "coin", goal = 100, text = "Pegue 100 moedas do chão", coins = 90, xp = 100, icon = "🪙" },
+	{ id = "abil6", kind = "ability", goal = 6, text = "Use habilidades 6 vezes", coins = 100, xp = 110, icon = "⚡", minLevel = 2 },
+	{ id = "strike", kind = "strike", goal = 1, text = "Faça um STRIKE no Boliche Gigante", coins = 170, xp = 180, icon = "🎳", minLevel = 3 },
+	{ id = "boss300", kind = "boss", goal = 300, text = "Cause 300 de dano ao Golem", coins = 420, xp = 360, icon = "🗿", minLevel = 8 },
+	{ id = "boom3", kind = "boomerang", goal = 3, text = "Pegue o Bumerangue 3 vezes", coins = 130, xp = 140, icon = "🪃", minLevel = 7 },
+	{ id = "peak", kind = "summit", goal = 1, text = "Conquiste o Pico da Montanha", coins = 200, xp = 220, icon = "🏔️", minLevel = 5 },
+}
+
+QuestDefs.ById = {}
+for _, q in QuestDefs.List do
+	QuestDefs.ById[q.id] = q
+end
+
+return QuestDefs
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="6">
+        <Properties>
           <string name="Name">Remotes</string>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
@@ -392,7 +430,7 @@ return Remotes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="6">
+      <Item class="ModuleScript" referent="7">
         <Properties>
           <string name="Name">Toys</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -629,7 +667,7 @@ return Toys
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="7">
+      <Item class="ModuleScript" referent="8">
         <Properties>
           <string name="Name">Util</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -972,11 +1010,11 @@ return Util
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="8">
+  <Item class="ServerScriptService" referent="9">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Script" referent="9">
+    <Item class="Script" referent="10">
       <Properties>
         <string name="Name">Server</string>
         <token name="RunContext">0</token>
@@ -1006,36 +1044,58 @@ workspace:SetAttribute("TV_LoadText", "Iniciando...")
 -- 1) remotes primeiro (todo o resto usa)
 Remotes.init()
 
--- 2) sistemas base
-local Data = require(script:WaitForChild("Data"))
-local Physics = require(script:WaitForChild("Physics"))
-local Ragdoll = require(script:WaitForChild("Ragdoll"))
-local Scoring = require(script:WaitForChild("Scoring"))
-local Board = require(script:WaitForChild("Board"))
-local Blasts = require(script:WaitForChild("Blasts"))
-local Pickups = require(script:WaitForChild("Pickups"))
-local ToyPassive = require(script:WaitForChild("ToyPassive"))
-local ToySpawner = require(script:WaitForChild("ToySpawner"))
-local Grab = require(script:WaitForChild("Grab"))
-local AbilityService = require(script:WaitForChild("AbilityService"))
-local Shop = require(script:WaitForChild("Shop"))
-local Zones = require(script:WaitForChild("Zones"))
-local Atmosphere = require(script:WaitForChild("Atmosphere"))
+-- 2) sistemas base (cada um carregado/iniciado de forma protegida: um erro nao derruba o jogo todo)
+local function load(name: string): any
+	local ok, mod = xpcall(function()
+		return require(script:WaitForChild(name, 20))
+	end, debug.traceback)
+	if not ok then
+		warn("[Servidor] falha ao carregar '" .. name .. "':\n" .. tostring(mod))
+		return nil
+	end
+	return mod
+end
 
-Atmosphere.init()
-Data.init()
-Physics.init()
-Ragdoll.init()
-Scoring.init()
-Board.init()
-Blasts.init()
-Pickups.init()
-ToyPassive.init()
-ToySpawner.init()
-Grab.init()
-AbilityService.init()
-Shop.init()
-Zones.init()
+local function start(name: string, mod: any)
+	if mod and type(mod.init) == "function" then
+		local ok, err = xpcall(mod.init, debug.traceback)
+		if not ok then
+			warn("[Servidor] falha ao iniciar '" .. name .. "':\n" .. tostring(err))
+		end
+	end
+end
+
+local Data = load("Data")
+local Physics = load("Physics")
+local Ragdoll = load("Ragdoll")
+local Scoring = load("Scoring")
+local Board = load("Board")
+local Blasts = load("Blasts")
+local Pickups = load("Pickups")
+local ToyPassive = load("ToyPassive")
+local ToySpawner = load("ToySpawner")
+local Grab = load("Grab")
+local AbilityService = load("AbilityService")
+local Shop = load("Shop")
+local Zones = load("Zones")
+local Quests = load("Quests")
+local Atmosphere = load("Atmosphere")
+
+start("Atmosphere", Atmosphere)
+start("Data", Data)
+start("Physics", Physics)
+start("Ragdoll", Ragdoll)
+start("Scoring", Scoring)
+start("Board", Board)
+start("Blasts", Blasts)
+start("Pickups", Pickups)
+start("ToyPassive", ToyPassive)
+start("ToySpawner", ToySpawner)
+start("Grab", Grab)
+start("AbilityService", AbilityService)
+start("Shop", Shop)
+start("Zones", Zones)
+start("Quests", Quests)
 
 -- 3) jogadores: espera o mundo + dados e so entao cria o personagem
 local function spawnPlayer(player: Player)
@@ -1043,7 +1103,7 @@ local function spawnPlayer(player: Player)
 	while not workspace:GetAttribute("TV_WorldReady") and player.Parent do
 		task.wait(0.25)
 	end
-	while not Data.isLoaded(player) and os.clock() - t0 < 30 and player.Parent do
+	while Data and not Data.isLoaded(player) and os.clock() - t0 < 30 and player.Parent do
 		task.wait(0.2)
 	end
 	if player.Parent then
@@ -1092,7 +1152,7 @@ task.spawn(function()
 end)
 ]]></string>
       </Properties>
-      <Item class="ModuleScript" referent="10">
+      <Item class="ModuleScript" referent="11">
         <Properties>
           <string name="Name">AbilityService</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -1123,6 +1183,7 @@ local Data = require(script.Parent:WaitForChild("Data"))
 local Grab = require(script.Parent:WaitForChild("Grab"))
 local Physics = require(script.Parent:WaitForChild("Physics"))
 local Blasts = require(script.Parent:WaitForChild("Blasts"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Abilities = {}
 
@@ -1403,6 +1464,7 @@ local function handleUse(player: Player, id: any, arg: any)
 	end
 
 	if ok then
+		Quests.report(player, "ability", 1)
 		cds[id] = now + cooldownFor(player, def)
 	else
 		Remotes.get("AbilityFx"):FireClient(player, "fail", player.UserId, hrp.Position, id)
@@ -1447,11 +1509,11 @@ return Abilities
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="11">
+      <Item class="Folder" referent="12">
         <Properties>
           <string name="Name">Activities</string>
         </Properties>
-        <Item class="ModuleScript" referent="12">
+        <Item class="ModuleScript" referent="13">
           <Properties>
             <string name="Name">Arena</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -1476,6 +1538,7 @@ local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local WorldGen = require(Server:WaitForChild("World"):WaitForChild("WorldGen"))
 local Hub = require(Server:WaitForChild("World"):WaitForChild("Hub"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Physics = require(Server:WaitForChild("Physics"))
 local Ragdoll = require(Server:WaitForChild("Ragdoll"))
 
@@ -1714,6 +1777,7 @@ local function botStep()
 				local coins = (rec.kind == "boss" and 200) or (rec.kind == "tank" and 30) or 12
 				Data.addCoins(killer, coins, "derrubou " .. rec.def.name)
 				Data.addXP(killer, coins)
+				Quests.report(killer, "bot", 1)
 				Remotes.get("ScorePopup"):FireClient(killer, p.Position + Vector3.new(0, 10, 0), "+" .. coins .. " 🪙", P.Green)
 			end
 			removeBot(rec)
@@ -1953,7 +2017,7 @@ return Arena
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="13">
+        <Item class="ModuleScript" referent="14">
           <Properties>
             <string name="Name">Boss</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -1983,6 +2047,7 @@ local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local WorldGen = require(Server:WaitForChild("World"):WaitForChild("WorldGen"))
 local Interactive = require(Server:WaitForChild("World"):WaitForChild("Interactive"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Physics = require(Server:WaitForChild("Physics"))
 local Ragdoll = require(Server:WaitForChild("Ragdoll"))
 local Blasts = require(Server:WaitForChild("Blasts"))
@@ -2197,6 +2262,7 @@ local function damage(amount: number, player: Player?)
 	golem.hp -= amount
 	if player then
 		golem.damageBy[player.UserId] = (golem.damageBy[player.UserId] or 0) + amount
+		Quests.report(player, "boss", amount)
 	end
 	-- fases
 	local frac = golem.hp / golem.maxHp
@@ -2631,7 +2697,7 @@ return Boss
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="14">
+        <Item class="ModuleScript" referent="15">
           <Properties>
             <string name="Name">Bowling</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -2650,6 +2716,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Pickups = require(Server:WaitForChild("Pickups"))
 
 local Bowling = {}
@@ -2754,6 +2821,7 @@ local function settle()
 		local label = knocked == #pins and "STRIKE!" or string.format("%d pinos", knocked)
 		Remotes.get("ScorePopup"):FireClient(player, center + Vector3.new(0, 6, 0), string.format("%s +%d", label, coins), knocked == #pins and P.Accent or P.Green)
 		if knocked == #pins then
+			Quests.report(player, "strike", 1)
 			Remotes.get("Announce"):FireClient(player, "STRIKE!", "Derrubou todos os pinos", 2, P.Accent)
 			Remotes.get("Fx"):FireAllClients("confetti", center, 1.3, nil)
 		end
@@ -2843,7 +2911,7 @@ return Bowling
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="15">
+        <Item class="ModuleScript" referent="16">
           <Properties>
             <string name="Name">Events</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3173,7 +3241,7 @@ return Events
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="16">
+        <Item class="ModuleScript" referent="17">
           <Properties>
             <string name="Name">Extras</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3190,6 +3258,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Server = script.Parent.Parent
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Extras = {}
 
@@ -3216,6 +3285,7 @@ function handlers.boomerang(player, action, part)
 		end
 	end)
 	if Data.isLoaded(player) then
+		Quests.report(player, "boomerang", 1)
 		Data.addCoins(player, 15, "pegou o bumerangue")
 		Data.addXP(player, 10)
 		Remotes.get("ScorePopup"):FireClient(player, part.Position + Vector3.new(0, 3, 0), "PEGOU! +15", Config.Palette.Accent)
@@ -3242,7 +3312,7 @@ return Extras
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="17">
+        <Item class="ModuleScript" referent="18">
           <Properties>
             <string name="Name">Hoops</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3261,6 +3331,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Hoops = {}
 
@@ -3323,6 +3394,7 @@ local function makeHoop(folder: Folder, x: number, z: number, height: number, po
 			return
 		end
 		local coins = points
+		Quests.report(player, "hoop", 1)
 		Data.addCoins(player, coins)
 		Data.addXP(player, points * 2)
 		Remotes.get("ScorePopup"):FireClient(player, ringCenter + Vector3.new(0, 4, 0), string.format("CESTA! +%d", coins), P.Accent)
@@ -3349,7 +3421,7 @@ return Hoops
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="18">
+        <Item class="ModuleScript" referent="19">
           <Properties>
             <string name="Name">Targets</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3370,6 +3442,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Targets = {}
 
@@ -3399,6 +3472,7 @@ local function award(player: Player, value: number, dist: number, pos: Vector3, 
 	Data.addCoins(player, coins)
 	Data.addXP(player, math.floor(points * 0.6))
 	Data.addStat(player, "TotalHits", 1)
+	Quests.report(player, "target", 1)
 	Remotes.get("ScorePopup"):FireClient(player, pos + Vector3.new(0, 3, 0), string.format("%s +%d", label, coins), value >= 60 and P.Accent or P.Green)
 end
 
@@ -3538,7 +3612,7 @@ return Targets
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="19">
+      <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">Atmosphere</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -3642,7 +3716,7 @@ return Atmosphere
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">Blasts</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -3874,7 +3948,7 @@ return Blasts
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">Board</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -4004,7 +4078,7 @@ return Board
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">Data</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -4053,6 +4127,7 @@ local DEFAULT = {
 	Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = false },
 	LastSlot = 0,
 	Wins = 0,
+	Quests = { slots = {}, completed = 0 },
 }
 
 local profiles = {} -- [player] = { data, loaded, dirty, lastSave }
@@ -4096,7 +4171,7 @@ end
 
 local PUBLIC_KEYS = {
 	"Coins", "XP", "Level", "SkillPoints", "BestThrow", "TotalThrows", "TotalHits", "BossDamage",
-	"Upgrades", "Toys", "OwnedTethers", "OwnedTrails", "Tether", "Trail", "Settings", "Wins",
+	"Upgrades", "Toys", "OwnedTethers", "OwnedTrails", "Tether", "Trail", "Settings", "Wins", "Quests",
 }
 
 function Data.snapshot(player: Player)
@@ -4334,6 +4409,12 @@ local function load(player: Player)
 				data = result
 				break
 			end
+			if RunService:IsStudio() then
+				-- Studio sem "Enable Studio Access to API Services": nao adianta tentar de novo
+				canPersist = false
+				warn("[Data] DataStore indisponivel no Studio; jogando sem salvar. (" .. tostring(result) .. ")")
+				break
+			end
 			task.wait(attempt)
 		end
 	end
@@ -4479,7 +4560,7 @@ return Data
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">Grab</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5076,7 +5157,7 @@ return Grab
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">Impact</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5308,7 +5389,7 @@ return Impact
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">Physics</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5559,7 +5640,7 @@ return Physics
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">Pickups</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -5578,6 +5659,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Data = require(script.Parent:WaitForChild("Data"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Pickups = {}
 
@@ -5647,6 +5729,7 @@ end
 local function collect(rec, player: Player)
 	Data.addCoins(player, rec.value)
 	Data.addXP(player, math.max(1, math.floor(rec.value / 3)))
+	Quests.report(player, "coin", rec.value)
 	Remotes.get("Fx"):FireClient(player, "coin", rec.part.Position, 1, nil)
 	if rec.static then
 		rec.part.Parent = nil
@@ -5751,7 +5834,125 @@ return Pickups
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="28">
+        <Properties>
+          <string name="Name">Quests</string>
+          <string name="Source"><![CDATA[--!nonstrict
+--[[
+	Quests (servidor): mantem 3 missoes ativas por jogador, conta progresso e paga recompensas.
+	Outros modulos chamam Quests.report(jogador, tipo, quantidade).
+]]
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local Remotes = require(Shared:WaitForChild("Remotes"))
+local QuestDefs = require(Shared:WaitForChild("QuestDefs"))
+
+local Data = require(script.Parent:WaitForChild("Data"))
+
+local Quests = {}
+
+local rng = Random.new()
+
+local function pickNew(data, level: number)
+	local slots = data.Quests.slots
+	local taken = {}
+	for _, s in slots do
+		taken[s.id] = true
+	end
+	local pool = {}
+	for _, q in QuestDefs.List do
+		if not taken[q.id] and (q.minLevel or 1) <= level then
+			table.insert(pool, q)
+		end
+	end
+	if #pool == 0 then
+		return nil
+	end
+	return pool[rng:NextInteger(1, #pool)]
+end
+
+local function ensure(player: Player)
+	local d = Data.get(player)
+	if not d then
+		return
+	end
+	if type(d.Quests) ~= "table" then
+		d.Quests = { slots = {}, completed = 0 }
+	end
+	d.Quests.slots = d.Quests.slots or {}
+	d.Quests.completed = d.Quests.completed or 0
+	-- remove missoes que nao existem mais
+	for i = #d.Quests.slots, 1, -1 do
+		if not QuestDefs.ById[d.Quests.slots[i].id] then
+			table.remove(d.Quests.slots, i)
+		end
+	end
+	while #d.Quests.slots < QuestDefs.SlotCount do
+		local q = pickNew(d, d.Level)
+		if not q then
+			break
+		end
+		table.insert(d.Quests.slots, { id = q.id, progress = 0 })
+	end
+	Data.push(player, "Quests")
+end
+
+function Quests.report(player: Player, kind: string, amount: number?)
+	local d = Data.get(player)
+	if not d or type(d.Quests) ~= "table" then
+		return
+	end
+	amount = amount or 1
+	local changed = false
+	for i = #d.Quests.slots, 1, -1 do
+		local s = d.Quests.slots[i]
+		local def = QuestDefs.ById[s.id]
+		if def and def.kind == kind then
+			s.progress = math.min(def.goal, s.progress + amount)
+			changed = true
+			if s.progress >= def.goal then
+				-- concluida!
+				d.Quests.completed += 1
+				table.remove(d.Quests.slots, i)
+				Data.addCoins(player, def.coins, "missão")
+				Data.addXP(player, def.xp)
+				Remotes.get("Announce"):FireClient(player, "MISSÃO CUMPRIDA!", def.icon .. " " .. def.text, 3, Config.Palette.Green)
+				local nq = pickNew(d, d.Level)
+				if nq then
+					table.insert(d.Quests.slots, { id = nq.id, progress = 0 })
+				end
+			end
+		end
+	end
+	if changed then
+		Data.push(player, "Quests")
+	end
+end
+
+function Quests.init()
+	Data.Loaded:Connect(function(player)
+		ensure(player)
+	end)
+	for _, p in Players:GetPlayers() do
+		if Data.isLoaded(p) then
+			ensure(p)
+		end
+	end
+	-- missoes de nivel mais alto passam a entrar ao subir de nivel (nas vagas livres)
+	Data.LevelUp:Connect(function(player)
+		ensure(player)
+	end)
+end
+
+return Quests
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">Ragdoll</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6032,7 +6233,7 @@ return Ragdoll
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="30">
         <Properties>
           <string name="Name">Scoring</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6048,6 +6249,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Data = require(script.Parent:WaitForChild("Data"))
 local Board = require(script.Parent:WaitForChild("Board"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Scoring = {}
 
@@ -6087,6 +6289,13 @@ function Scoring.throwLanded(player: Player, distance: number, bonus: number?, p
 	local xp = math.floor(distance * 0.28 * mult) + 4
 	local record = distance > (d.BestThrow or 0)
 	Data.addStat(player, "TotalThrows", 1)
+	Quests.report(player, "throw", 1)
+	if distance >= 150 then
+		Quests.report(player, "far", 1)
+	end
+	if distance >= 300 then
+		Quests.report(player, "far300", 1)
+	end
 	if record then
 		Data.set(player, "BestThrow", math.floor(distance))
 		Board.submit(player, distance)
@@ -6141,6 +6350,7 @@ function Scoring.hit(attacker: Player?, victimModel: Model, victimPlayer: Player
 		local count = combo(attacker)
 		local coins = math.floor(Config.Economy.HitCoins * (1 + 0.15 * (count - 1)))
 		Data.addStat(attacker, "TotalHits", 1)
+		Quests.report(attacker, "hit", 1)
 		Data.addCoins(attacker, coins)
 		Data.addXP(attacker, 8)
 		local root = victimModel:FindFirstChild("HumanoidRootPart")
@@ -6162,7 +6372,7 @@ return Scoring
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="29">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">Shop</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6298,7 +6508,7 @@ return Shop
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="30">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">ToyFactory</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6785,7 +6995,7 @@ return ToyFactory
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="31">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">ToyPassive</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -6948,7 +7158,7 @@ return ToyPassive
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="32">
+      <Item class="ModuleScript" referent="34">
         <Properties>
           <string name="Name">ToySpawner</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -7183,11 +7393,11 @@ return ToySpawner
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="33">
+      <Item class="Folder" referent="35">
         <Properties>
           <string name="Name">World</string>
         </Properties>
-        <Item class="ModuleScript" referent="34">
+        <Item class="ModuleScript" referent="36">
           <Properties>
             <string name="Name">Beach</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -7458,7 +7668,7 @@ return Beach
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="35">
+        <Item class="ModuleScript" referent="37">
           <Properties>
             <string name="Name">Build</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -7889,7 +8099,7 @@ return Build
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="38">
           <Properties>
             <string name="Name">Cave</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -7998,7 +8208,7 @@ return Cave
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="37">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">Farm</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8286,7 +8496,7 @@ return Farm
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">Hub</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8691,7 +8901,7 @@ return Hub
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="41">
           <Properties>
             <string name="Name">Interactive</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -8896,7 +9106,7 @@ return Interactive
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="42">
           <Properties>
             <string name="Name">Nature</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9007,7 +9217,7 @@ return Nature
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">Scenery</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9072,9 +9282,18 @@ local function expressCannons(folder: Folder)
 	end
 end
 
+-- Roda uma etapa protegida: se falhar, avisa no Output e o resto do mundo continua.
+local function stage(name: string, fn: (...any) -> ...any, ...)
+	local ok, err = xpcall(fn, debug.traceback, ...)
+	if not ok then
+		warn("[Mundo] etapa '" .. name .. "' falhou:\n" .. tostring(err))
+	end
+	return ok
+end
+
 function Scenery.build()
 	setProgress(0, "Gerando terreno...")
-	WorldGen.build(function(p)
+	stage("terreno", WorldGen.build, function(p)
 		setProgress(p * 0.55, "Gerando terreno...")
 	end)
 
@@ -9085,27 +9304,27 @@ function Scenery.build()
 	end
 
 	setProgress(0.58, "Construindo a praça...")
-	Hub.build()
+	stage("praca", Hub.build)
 	task.wait()
 	setProgress(0.64, "Plantando a fazenda...")
-	Farm.build(rng, addSlot)
+	stage("fazenda", Farm.build, rng, addSlot)
 	task.wait()
 	setProgress(0.70, "Cobrindo a montanha de neve...")
-	Snow.build(rng, addSlot)
+	stage("montanha", Snow.build, rng, addSlot)
 	task.wait()
 	setProgress(0.76, "Acendendo o vulcão...")
-	Volcano.build(rng, addSlot)
+	stage("vulcao", Volcano.build, rng, addSlot)
 	task.wait()
 	setProgress(0.82, "Molhando a praia...")
-	Beach.build(rng, addSlot)
+	stage("praia", Beach.build, rng, addSlot)
 	task.wait()
 	setProgress(0.87, "Levantando as ilhas...")
-	Sky.build(rng, addSlot)
+	stage("ilhas", Sky.build, rng, addSlot)
 	task.wait()
 	setProgress(0.90, "Iluminando a caverna...")
-	Cave.build(rng, addSlot)
+	stage("caverna", Cave.build, rng, addSlot)
 
-	expressCannons(Build.folder("Cannons"))
+	stage("canhoes", expressCannons, Build.folder("Cannons"))
 
 	-- brinquedos na praca (fora da zona segura) e moedas soltas
 	local hubY = Build.y(0, 0)
@@ -9143,7 +9362,7 @@ return Scenery
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">Sky</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9344,7 +9563,7 @@ return Sky
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">Snow</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9363,6 +9582,7 @@ local Build = require(script.Parent:WaitForChild("Build"))
 local Nature = require(script.Parent:WaitForChild("Nature"))
 local WorldGen = require(script.Parent:WaitForChild("WorldGen"))
 local Data = require(script.Parent.Parent:WaitForChild("Data"))
+local Quests = require(script.Parent.Parent:WaitForChild("Quests"))
 local Pickups = require(script.Parent.Parent:WaitForChild("Pickups"))
 
 local Snow = {}
@@ -9490,6 +9710,7 @@ local function summit(folder: Folder)
 			return
 		end
 		last[player] = now
+		Quests.report(player, "summit", 1)
 		Data.addXP(player, 60)
 		Pickups.burst(Vector3.new(bx, y + 6, bz), 150, 15)
 		Remotes.get("Announce"):FireClient(player, "PICO CONQUISTADO!", "Você escalou a montanha inteira", 2.6, P.Accent)
@@ -9591,7 +9812,7 @@ return Snow
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">Volcano</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -9814,7 +10035,7 @@ return Volcano
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">WorldGen</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -10313,7 +10534,7 @@ return WorldGen
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="46">
+      <Item class="ModuleScript" referent="48">
         <Properties>
           <string name="Name">Zones</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -10455,23 +10676,24 @@ return Zones
       </Item>
     </Item>
   </Item>
-  <Item class="StarterPlayer" referent="47">
+  <Item class="StarterPlayer" referent="49">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <float name="CameraMaxZoomDistance">70</float>
       <bool name="EnableMouseLockOption">false</bool>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="48">
+    <Item class="StarterPlayerScripts" referent="50">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="49">
+      <Item class="LocalScript" referent="51">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--!nonstrict
 --[[
 	TUDO VOA! — Ilhas do Caos
 	Script principal do cliente: inicia a interface e todos os sistemas locais.
+	Cada modulo e carregado/iniciado de forma protegida: se um falhar, o resto do jogo continua.
 ]]
 
 local Players = game:GetService("Players")
@@ -10492,49 +10714,67 @@ pcall(function()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 end)
 
-local Store = require(script:WaitForChild("Store"))
-local Loading = require(script:WaitForChild("UI"):WaitForChild("Loading"))
-local HUD = require(script:WaitForChild("UI"):WaitForChild("HUD"))
-local Menu = require(script:WaitForChild("UI"):WaitForChild("Menu"))
-local Mobile = require(script:WaitForChild("UI"):WaitForChild("Mobile"))
-local Tutorial = require(script:WaitForChild("UI"):WaitForChild("Tutorial"))
-local Fx = require(script:WaitForChild("Fx"))
-local GrabController = require(script:WaitForChild("GrabController"))
-local Tether = require(script:WaitForChild("Tether"))
-local Pose = require(script:WaitForChild("Pose"))
-local ToyPhysics = require(script:WaitForChild("ToyPhysics"))
-local Movement = require(script:WaitForChild("Movement"))
-local DecorAnim = require(script:WaitForChild("DecorAnim"))
-local AbilityBar = require(script:WaitForChild("AbilityBar"))
+local function load(parent: Instance, name: string): any
+	local ok, mod = xpcall(function()
+		return require(parent:WaitForChild(name, 20))
+	end, debug.traceback)
+	if not ok then
+		warn("[Cliente] falha ao carregar '" .. name .. "':\n" .. tostring(mod))
+		return nil
+	end
+	return mod
+end
 
-Loading.init()
-Store.init()
-Fx.init()
-HUD.init()
-Menu.init()
-Tether.init()
-GrabController.init()
-Pose.init()
-ToyPhysics.init()
-Movement.init()
-DecorAnim.init()
-AbilityBar.init()
-Mobile.init()
+local function start(name: string, mod: any)
+	if mod and type(mod.init) == "function" then
+		local ok, err = xpcall(mod.init, debug.traceback)
+		if not ok then
+			warn("[Cliente] falha ao iniciar '" .. name .. "':\n" .. tostring(err))
+		end
+	end
+end
 
--- modulos de atividades do cliente (chefao, arena, eventos...) sao opcionais
+local UI = script:WaitForChild("UI")
+local Store = load(script, "Store")
+local Loading = load(UI, "Loading")
+local HUD = load(UI, "HUD")
+local Menu = load(UI, "Menu")
+local Mobile = load(UI, "Mobile")
+local Tutorial = load(UI, "Tutorial")
+local QuestPanel = load(UI, "QuestPanel")
+local Fx = load(script, "Fx")
+local GrabController = load(script, "GrabController")
+local Tether = load(script, "Tether")
+local Pose = load(script, "Pose")
+local ToyPhysics = load(script, "ToyPhysics")
+local Movement = load(script, "Movement")
+local DecorAnim = load(script, "DecorAnim")
+local AbilityBar = load(script, "AbilityBar")
+local Ambient = load(script, "Ambient")
+
+-- ordem importa: carregamento e dados primeiro
+start("Loading", Loading)
+start("Store", Store)
+start("Fx", Fx)
+start("HUD", HUD)
+start("Menu", Menu)
+start("QuestPanel", QuestPanel)
+start("Tether", Tether)
+start("GrabController", GrabController)
+start("Pose", Pose)
+start("ToyPhysics", ToyPhysics)
+start("Movement", Movement)
+start("DecorAnim", DecorAnim)
+start("AbilityBar", AbilityBar)
+start("Ambient", Ambient)
+start("Mobile", Mobile)
+
+-- modulos de atividades do cliente (chefao, arena, eventos...)
 local Activities = script:FindFirstChild("Activities")
 if Activities then
 	for _, mod in Activities:GetChildren() do
 		if mod:IsA("ModuleScript") then
-			local ok, res = pcall(require, mod)
-			if ok and type(res) == "table" and res.init then
-				local okInit, err = pcall(res.init)
-				if not okInit then
-					warn("[Cliente] atividade falhou ao iniciar", mod.Name, err)
-				end
-			elseif not ok then
-				warn("[Cliente] atividade falhou ao carregar", mod.Name, res)
-			end
+			start(mod.Name, load(Activities, mod.Name))
 		end
 	end
 end
@@ -10542,7 +10782,7 @@ end
 -- interacoes por tecla E (ProximityPrompt)
 ProximityPromptService.PromptTriggered:Connect(function(prompt)
 	local id = prompt:GetAttribute("Id")
-	if id == "shop" then
+	if id == "shop" and Menu then
 		Menu.open("shop")
 	end
 end)
@@ -10554,17 +10794,19 @@ task.spawn(function()
 		local worldReady = workspace:GetAttribute("TV_WorldReady") == true
 		local char = player.Character
 		local hasChar = char and char:FindFirstChild("HumanoidRootPart") ~= nil
-		if worldReady and hasChar and (Store.loaded or os.clock() - t0 > 20) then
+		if worldReady and hasChar and ((Store and Store.loaded) or os.clock() - t0 > 20) then
 			break
 		end
 		task.wait(0.2)
 	end
-	Loading.finish()
-	Tutorial.init()
+	if Loading then
+		Loading.finish()
+	end
+	start("Tutorial", Tutorial)
 end)
 ]]></string>
         </Properties>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">AbilityBar</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -10921,11 +11163,11 @@ return AbilityBar
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="51">
+        <Item class="Folder" referent="53">
           <Properties>
             <string name="Name">Activities</string>
           </Properties>
-          <Item class="ModuleScript" referent="52">
+          <Item class="ModuleScript" referent="54">
             <Properties>
               <string name="Name">ArenaUI</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -10999,7 +11241,7 @@ return ArenaUI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="53">
+          <Item class="ModuleScript" referent="55">
             <Properties>
               <string name="Name">BossUI</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11077,7 +11319,7 @@ return BossUI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="54">
+          <Item class="ModuleScript" referent="56">
             <Properties>
               <string name="Name">EventBanner</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11145,7 +11387,176 @@ return EventBanner
             </Properties>
           </Item>
         </Item>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="57">
+          <Properties>
+            <string name="Name">Ambient</string>
+            <string name="Source"><![CDATA[--!nonstrict
+--[[
+	Ambient: particulas ambiente que seguem o jogador e mudam com a regiao
+	(polen, neve, brasas, esporos de caverna, brilhos no ceu).
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+
+local Ambient = {}
+
+local player = Players.LocalPlayer
+local P = Config.Palette
+
+local part, emitters
+local currentPreset = nil
+local lastIndoorCheck = 0
+local indoor = false
+
+local function ns(a, b)
+	return NumberSequence.new({ NumberSequenceKeypoint.new(0, a), NumberSequenceKeypoint.new(1, b) })
+end
+
+local function makeEmitter(att: Attachment, props)
+	local e = Instance.new("ParticleEmitter")
+	e.Rate = 0
+	e.Enabled = true
+	e.Shape = Enum.ParticleEmitterShape.Box
+	e.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward
+	for k, v in props do
+		e[k] = v
+	end
+	e.Parent = att
+	return e
+end
+
+local function build()
+	part = Instance.new("Part")
+	part.Name = "TV_AmbientEmitter"
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.Transparency = 1
+	part.Size = Vector3.new(110, 2, 110)
+	part.Parent = workspace
+	local att = Instance.new("Attachment")
+	att.Parent = part
+	emitters = {
+		pollen = makeEmitter(att, {
+			Lifetime = NumberRange.new(6, 10),
+			Speed = NumberRange.new(0.5, 2),
+			SpreadAngle = Vector2.new(180, 180),
+			Size = ns(0.35, 0.1),
+			LightEmission = 0.7,
+			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.3), NumberSequenceKeypoint.new(1, 1) }),
+			Color = ColorSequence.new(Color3.fromRGB(255, 240, 170), Color3.fromRGB(255, 255, 255)),
+			Acceleration = Vector3.new(0.6, 0.2, 0.3),
+		}),
+		snow = makeEmitter(att, {
+			Lifetime = NumberRange.new(6, 8),
+			Speed = NumberRange.new(4, 9),
+			EmissionDirection = Enum.NormalId.Bottom,
+			SpreadAngle = Vector2.new(20, 20),
+			Size = ns(0.5, 0.4),
+			LightEmission = 0.3,
+			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.1, 0.1), NumberSequenceKeypoint.new(1, 0.5) }),
+			Color = ColorSequence.new(Color3.new(1, 1, 1)),
+			Acceleration = Vector3.new(3, 0, 1.5),
+		}),
+		embers = makeEmitter(att, {
+			Lifetime = NumberRange.new(3, 5),
+			Speed = NumberRange.new(7, 14),
+			EmissionDirection = Enum.NormalId.Top,
+			SpreadAngle = Vector2.new(30, 30),
+			Size = ns(0.6, 0),
+			LightEmission = 1,
+			Color = ColorSequence.new(Color3.fromRGB(255, 200, 90), Color3.fromRGB(255, 70, 20)),
+			Acceleration = Vector3.new(2, 4, 1),
+		}),
+		spores = makeEmitter(att, {
+			Lifetime = NumberRange.new(5, 9),
+			Speed = NumberRange.new(0.5, 3),
+			SpreadAngle = Vector2.new(180, 180),
+			Size = ns(0.7, 0.2),
+			LightEmission = 1,
+			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.3, 0.2), NumberSequenceKeypoint.new(1, 1) }),
+			Color = ColorSequence.new(P.Accent2, P.Pink),
+			Acceleration = Vector3.new(0, 0.8, 0),
+		}),
+		sparkle = makeEmitter(att, {
+			Lifetime = NumberRange.new(4, 7),
+			Speed = NumberRange.new(1, 4),
+			SpreadAngle = Vector2.new(180, 180),
+			Size = ns(0.6, 0),
+			LightEmission = 1,
+			Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.2), NumberSequenceKeypoint.new(1, 1) }),
+			Color = ColorSequence.new(P.Accent2, P.Purple),
+		}),
+	}
+end
+
+local RATES = {
+	pollen = { pollen = 5 },
+	snow = { snow = 70 },
+	embers = { embers = 22 },
+	spores = { spores = 14 },
+	sparkle = { sparkle = 8 },
+}
+
+local function setPreset(name: string)
+	if name == currentPreset then
+		return
+	end
+	currentPreset = name
+	local rates = RATES[name] or {}
+	for id, e in emitters do
+		e.Rate = rates[id] or 0
+	end
+end
+
+local function presetFor(zone: string?, y: number): string
+	if indoor then
+		return "spores"
+	end
+	if y > Config.World.SkyY - 60 then
+		return "sparkle"
+	end
+	if zone == Config.Biomes.Snow.name then
+		return "snow"
+	elseif zone == Config.Biomes.Volcano.name then
+		return "embers"
+	elseif zone == Config.Biomes.Hub.name then
+		return "sparkle"
+	end
+	return "pollen"
+end
+
+function Ambient.init()
+	build()
+	RunService.RenderStepped:Connect(function()
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then
+			return
+		end
+		local now = os.clock()
+		if now - lastIndoorCheck > 1 then
+			lastIndoorCheck = now
+			-- ha terreno/teto acima do jogador? (caverna)
+			local hit = workspace:Raycast(hrp.Position, Vector3.new(0, 90, 0))
+			indoor = hit ~= nil and hit.Instance == workspace.Terrain
+			setPreset(presetFor(player:GetAttribute("Zone"), hrp.Position.Y))
+		end
+		part.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 26, 0))
+	end)
+end
+
+return Ambient
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">Audio</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11241,7 +11652,7 @@ return Audio
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">DecorAnim</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11371,9 +11782,49 @@ function DecorAnim.init()
 		CollectionService:GetInstanceRemovedSignal(tag):Connect(onUntagged)
 	end
 
+	-- luzes dos postes: acendem a noite
+	local Lighting = game:GetService("Lighting")
+	local lamps = {}
+	local function trackLamp(p)
+		if p:IsA("BasePart") then
+			table.insert(lamps, p)
+		end
+	end
+	for _, p in CollectionService:GetTagged("TV_Lamp") do
+		trackLamp(p)
+	end
+	CollectionService:GetInstanceAddedSignal("TV_Lamp"):Connect(trackLamp)
+	local lastNight = nil
+	local function updateLamps()
+		local t = Lighting.ClockTime
+		local night = t < 5.8 or t > 18.2
+		if night == lastNight then
+			return
+		end
+		lastNight = night
+		for i = #lamps, 1, -1 do
+			local p = lamps[i]
+			if not p.Parent then
+				table.remove(lamps, i)
+			else
+				p.Material = night and Enum.Material.Neon or Enum.Material.SmoothPlastic
+				local l = p:FindFirstChildWhichIsA("PointLight")
+				if l then
+					l.Enabled = night
+				end
+			end
+		end
+	end
+
 	local acc = 0
+	local accLamps = 0
 	RunService.RenderStepped:Connect(function(dt)
 		acc += dt
+		accLamps += dt
+		if accLamps > 2 then
+			accLamps = 0
+			updateLamps()
+		end
 		if acc > 0.4 then
 			acc = 0
 			refreshActive()
@@ -11423,7 +11874,7 @@ return DecorAnim
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">Fx</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -11934,7 +12385,7 @@ return Fx
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">GrabController</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -12402,7 +12853,7 @@ local function throwAll()
 end
 
 local function beginCharge()
-	if #holds == 0 or GrabController.charging then
+	if #holds == 0 or GrabController.charging or HUD.menuOpen then
 		return
 	end
 	GrabController.charging = true
@@ -12437,8 +12888,8 @@ local function update(dt: number)
 	end
 	local c = character()
 
-	-- caiu no ragdoll com coisas na mao: solta
-	if c:GetAttribute("Ragdolled") and #holds > 0 then
+	-- caiu no ragdoll (ou abriu o menu) com coisas na mao: solta
+	if (c:GetAttribute("Ragdolled") or HUD.menuOpen) and #holds > 0 then
 		dropAll()
 	end
 
@@ -12562,7 +13013,7 @@ end
 local tryGrabSecond
 
 local function onInputBegan(input: InputObject, processed: boolean)
-	if processed then
+	if processed or HUD.menuOpen then
 		return
 	end
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -12727,7 +13178,7 @@ return GrabController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="62">
           <Properties>
             <string name="Name">Movement</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13026,7 +13477,7 @@ return Movement
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">Pose</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13251,7 +13702,7 @@ return Pose
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="61">
+        <Item class="ModuleScript" referent="64">
           <Properties>
             <string name="Name">Store</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13292,6 +13743,7 @@ local data = {
 	Trail = "Nenhum",
 	Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = false },
 	Wins = 0,
+	Quests = { slots = {}, completed = 0 },
 }
 
 function Store.get(key: string): any
@@ -13371,7 +13823,7 @@ return Store
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="62">
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">Tether</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13478,7 +13930,17 @@ local function makeBeam(char: Model, ov: ObjectValue)
 	sparks.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
 	sparks.Parent = a1
 
-	local rec = { beam = beam, core = core, a0 = a0, own0 = own0, a1 = a1, sparks = sparks, char = char, player = player, rainbow = rainbow, key = key, ov = ov, t0 = os.clock() }
+	-- contorno colorido no objeto/pessoa segurado
+	local hl = Instance.new("Highlight")
+	hl.Name = "TV_HeldOutline"
+	hl.Adornee = (key.Parent and key.Parent:IsA("Model") and key.Parent) or key
+	hl.FillTransparency = 1
+	hl.OutlineColor = color
+	hl.OutlineTransparency = 0.15
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = key
+
+	local rec = { beam = beam, core = core, a0 = a0, own0 = own0, a1 = a1, sparks = sparks, hl = hl, char = char, player = player, rainbow = rainbow, key = key, ov = ov, t0 = os.clock() }
 	table.insert(beams, rec)
 	local list = Tether.active[char]
 	if not list then
@@ -13504,7 +13966,7 @@ local function destroyBeam(rec)
 			Tether.active[rec.char] = nil
 		end
 	end
-	for _, o in { rec.beam, rec.core, rec.a1, rec.sparks } do
+	for _, o in { rec.beam, rec.core, rec.a1, rec.sparks, rec.hl } do
 		if o and o.Parent then
 			o:Destroy()
 		end
@@ -13583,6 +14045,7 @@ function Tether.init()
 					local c1 = Util.hue(t * 0.4 + 0.3, 0.75, 1)
 					rec.beam.Color = ColorSequence.new(c0, c1)
 					rec.sparks.Color = ColorSequence.new(c0, c1)
+					rec.hl.OutlineColor = c0
 				end
 			end
 		end
@@ -13593,7 +14056,7 @@ return Tether
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="63">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">ToyPhysics</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13826,7 +14289,7 @@ return ToyPhysics
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="64">
+        <Item class="ModuleScript" referent="67">
           <Properties>
             <string name="Name">Trajectory</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -13945,11 +14408,11 @@ return Trajectory
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="65">
+        <Item class="Folder" referent="68">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="66">
+          <Item class="ModuleScript" referent="69">
             <Properties>
               <string name="Name">HUD</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14419,7 +14882,7 @@ return HUD
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="67">
+          <Item class="ModuleScript" referent="70">
             <Properties>
               <string name="Name">Loading</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14577,7 +15040,7 @@ return Loading
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="68">
+          <Item class="ModuleScript" referent="71">
             <Properties>
               <string name="Name">Menu</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14596,6 +15059,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Util = require(Shared:WaitForChild("Util"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local AbilityDefs = require(Shared:WaitForChild("AbilityDefs"))
+local QuestDefs = require(Shared:WaitForChild("QuestDefs"))
 
 local Store = require(script.Parent.Parent:WaitForChild("Store"))
 local Audio = require(script.Parent.Parent:WaitForChild("Audio"))
@@ -14616,6 +15080,7 @@ local TABS = {
 	{ id = "shop", label = "🧸  Loja" },
 	{ id = "toys", label = "🎒  Meus Brinquedos" },
 	{ id = "skills", label = "⭐  Habilidades" },
+	{ id = "quests", label = "📋  Missões" },
 	{ id = "tether", label = "🔗  Cabo & Rastro" },
 	{ id = "board", label = "🏆  Recordes" },
 	{ id = "settings", label = "⚙️  Ajustes" },
@@ -14820,6 +15285,29 @@ buildTab.skills = function()
 			row.BackgroundTransparency = 0.5
 		end
 	end
+end
+
+-- Aba: Missoes ---------------------------------------------------------------------------------------------------------------------------------
+
+buildTab.quests = function()
+	useList(10)
+	local q = Store.get("Quests") or { slots = {}, completed = 0 }
+	header(string.format("Missões ativas  ·  %d concluídas", q.completed or 0), 1)
+	for i, s in q.slots do
+		local def = QuestDefs.ById[s.id]
+		if def then
+			local row = Theme.panel(content, { size = UDim2.new(1, -12, 0, 78) })
+			row.LayoutOrder = i + 1
+			Theme.text(row, { text = def.icon, size = 34, frame = UDim2.fromOffset(60, 78) })
+			Theme.text(row, { text = def.text, font = Theme.Title, size = 17, alignX = Enum.TextXAlignment.Left, wrap = true, frame = UDim2.new(1, -220, 0, 26), position = UDim2.fromOffset(64, 8) })
+			local bar = Theme.bar(row, { size = UDim2.new(1, -230, 0, 14), position = UDim2.fromOffset(66, 44), color = P.Green, gradient = P.Accent2, radius = 7 })
+			bar.set(s.progress / math.max(def.goal, 1), true)
+			Theme.text(row, { text = string.format("%s / %s", Util.formatNumber(s.progress), Util.formatNumber(def.goal)), size = 13, font = Theme.Bold, color = P.Muted, alignX = Enum.TextXAlignment.Left, frame = UDim2.fromOffset(120, 16), position = UDim2.fromOffset(66, 60) })
+			Theme.text(row, { text = string.format("🪙 %d   ✨ %d XP", def.coins, def.xp), size = 16, font = Theme.Title, color = P.Accent, alignX = Enum.TextXAlignment.Right, frame = UDim2.fromOffset(140, 30), position = UDim2.new(1, -150, 0.5, -15) })
+		end
+	end
+	local tip = Theme.text(content, { text = "Ao cumprir uma missão, outra aparece no lugar. Novas missões entram conforme você sobe de nível.", size = 14, color = P.Muted, wrap = true, frame = UDim2.new(1, -12, 0, 40) })
+	tip.LayoutOrder = 99
 end
 
 -- Aba: Cabo & Rastro ------------------------------------------------------------------------------------------------------------------------
@@ -15028,6 +15516,7 @@ function Menu.open(tab: string?)
 		currentTab = tab
 	end
 	isOpen = true
+	HUD.menuOpen = true
 	gui.Enabled = true
 	window.Position = UDim2.fromScale(0.5, 0.56)
 	Theme.tween(window, 0.22, { Position = UDim2.fromScale(0.5, 0.5) }, Enum.EasingStyle.Back)
@@ -15041,6 +15530,7 @@ function Menu.close()
 		return
 	end
 	isOpen = false
+	HUD.menuOpen = false
 	gui.Enabled = false
 end
 
@@ -15112,7 +15602,7 @@ function Menu.init()
 	Theme.padding(content, 4)
 
 	Store.Changed:Connect(function(key)
-		if isOpen and (key == "Coins" or key == "Toys" or key == "Level" or key == "SkillPoints" or key == "Upgrades" or key == "Tether" or key == "Trail" or key == "OwnedTethers" or key == "OwnedTrails") then
+		if isOpen and (key == "Coins" or key == "Toys" or key == "Level" or key == "SkillPoints" or key == "Upgrades" or key == "Tether" or key == "Trail" or key == "OwnedTethers" or key == "OwnedTrails" or key == "Quests") then
 			Menu.refresh()
 		end
 	end)
@@ -15131,7 +15621,7 @@ return Menu
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="69">
+          <Item class="ModuleScript" referent="72">
             <Properties>
               <string name="Name">Mobile</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15213,7 +15703,109 @@ return Mobile
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="70">
+          <Item class="ModuleScript" referent="73">
+            <Properties>
+              <string name="Name">QuestPanel</string>
+              <string name="Source"><![CDATA[--!nonstrict
+--[[
+	QuestPanel: lista compacta das missoes ativas (canto esquerdo, abaixo do cartao do jogador).
+	Tecla J recolhe/expande.
+]]
+
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local QuestDefs = require(Shared:WaitForChild("QuestDefs"))
+local Util = require(Shared:WaitForChild("Util"))
+
+local Store = require(script.Parent.Parent:WaitForChild("Store"))
+local Theme = require(script.Parent:WaitForChild("Theme"))
+local HUD = require(script.Parent:WaitForChild("HUD"))
+
+local QuestPanel = {}
+
+local P = Theme.P
+local panel, list, header
+local collapsed = false
+local lastProgress = {}
+
+local ROW_H = 46
+
+local function render()
+	for _, c in list:GetChildren() do
+		if c:IsA("Frame") then
+			c:Destroy()
+		end
+	end
+	local q = Store.get("Quests")
+	local slots = q and q.slots or {}
+	header.Text = string.format("📋 MISSÕES  <font color='#96a0c8' size='12'>[J]  ·  %d feitas</font>", (q and q.completed) or 0)
+	for i, s in slots do
+		local def = QuestDefs.ById[s.id]
+		if def then
+			local row = Theme.new("Frame", { Size = UDim2.new(1, 0, 0, ROW_H), BackgroundTransparency = 1, LayoutOrder = i, Parent = list, Name = "Q" .. i })
+			Theme.text(row, { text = def.icon .. " " .. def.text, size = 13, font = Theme.Bold, alignX = Enum.TextXAlignment.Left, wrap = true, alignY = Enum.TextYAlignment.Top, frame = UDim2.new(1, -6, 0, 26), position = UDim2.fromOffset(2, 0) })
+			local bar = Theme.bar(row, { size = UDim2.new(1, -62, 0, 10), position = UDim2.fromOffset(2, 30), color = P.Green, gradient = P.Accent2, radius = 5 })
+			local frac = s.progress / math.max(def.goal, 1)
+			bar.set(frac, true)
+			Theme.text(row, { text = string.format("%s/%s", Util.formatNumber(s.progress), Util.formatNumber(def.goal)), size = 12, font = Theme.Bold, color = P.Accent, alignX = Enum.TextXAlignment.Right, frame = UDim2.fromOffset(56, 14), position = UDim2.new(1, -56, 0, 26) })
+			local last = lastProgress[s.id]
+			if last and s.progress > last then
+				Theme.tween(row, 0.001, {})
+				local pulse = Theme.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = P.Accent, BackgroundTransparency = 0.6, Parent = row, ZIndex = 0 })
+				Theme.corner(pulse, 6)
+				Theme.tween(pulse, 0.8, { BackgroundTransparency = 1 })
+				task.delay(0.9, function()
+					pulse:Destroy()
+				end)
+			end
+			lastProgress[s.id] = s.progress
+		end
+	end
+	local n = #slots
+	panel.Size = UDim2.fromOffset(300, collapsed and 34 or (44 + n * (ROW_H + 4)))
+	list.Visible = not collapsed
+end
+
+function QuestPanel.init()
+	panel = Theme.panel(HUD.gui, {
+		size = UDim2.fromOffset(300, 160),
+		position = UDim2.fromOffset(16, 158),
+		name = "Quests",
+		transparency = 0.25,
+		radius = 12,
+	})
+	header = Theme.text(panel, { text = "📋 MISSÕES", font = Theme.Title, size = 16, color = P.Accent, alignX = Enum.TextXAlignment.Left, frame = UDim2.new(1, -16, 0, 26), position = UDim2.fromOffset(10, 4) })
+	list = Theme.new("Frame", { Size = UDim2.new(1, -20, 1, -38), Position = UDim2.fromOffset(10, 34), BackgroundTransparency = 1, Parent = panel })
+	Theme.new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
+
+	local btn = Theme.new("TextButton", { Size = UDim2.fromScale(1, 0), Text = "", BackgroundTransparency = 1, Parent = panel })
+	btn.Size = UDim2.new(1, 0, 0, 30)
+	btn.Activated:Connect(function()
+		collapsed = not collapsed
+		render()
+	end)
+
+	Store.Changed:Connect(function(key)
+		if key == "Quests" then
+			render()
+		end
+	end)
+	UserInputService.InputBegan:Connect(function(input, processed)
+		if not processed and input.KeyCode == Enum.KeyCode.J then
+			collapsed = not collapsed
+			render()
+		end
+	end)
+	render()
+end
+
+return QuestPanel
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="74">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15426,7 +16018,7 @@ return Theme
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="71">
+          <Item class="ModuleScript" referent="75">
             <Properties>
               <string name="Name">Tutorial</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15515,7 +16107,7 @@ return Tutorial
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="72">
+  <Item class="Workspace" referent="76">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

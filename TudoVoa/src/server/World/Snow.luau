@@ -14,6 +14,7 @@ local Build = require(script.Parent:WaitForChild("Build"))
 local Nature = require(script.Parent:WaitForChild("Nature"))
 local WorldGen = require(script.Parent:WaitForChild("WorldGen"))
 local Data = require(script.Parent.Parent:WaitForChild("Data"))
+local Quests = require(script.Parent.Parent:WaitForChild("Quests"))
 local Pickups = require(script.Parent.Parent:WaitForChild("Pickups"))
 
 local Snow = {}
@@ -141,6 +142,7 @@ local function summit(folder: Folder)
 			return
 		end
 		last[player] = now
+		Quests.report(player, "summit", 1)
 		Data.addXP(player, 60)
 		Pickups.burst(Vector3.new(bx, y + 6, bz), 150, 15)
 		Remotes.get("Announce"):FireClient(player, "PICO CONQUISTADO!", "Você escalou a montanha inteira", 2.6, P.Accent)

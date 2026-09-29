@@ -58,7 +58,7 @@ try("Store recebe dados", function()
 		Coins = 1234, XP = 50, XPNeeded = 200, Level = 12, SkillPoints = 3, BestThrow = 250,
 		Upgrades = { Power = 2, Range = 1 }, Toys = { foguete = true },
 		OwnedTethers = { Roxo = true, Ciano = true, Ouro = true }, OwnedTrails = { Nenhum = true },
-		Tether = "Ouro", Trail = "Nenhum", Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = true },
+		Tether = "Ouro", Trail = "Nenhum", Quests = { completed = 2, slots = { { id = "throws10", progress = 4 }, { id = "hits5", progress = 1 }, { id = "boss300", progress = 120 } } }, Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = true },
 	})
 	local Store = R("Store")
 	assert(Store.get("Level") == 12)
@@ -94,7 +94,7 @@ end)
 
 try("Menu: todas as abas", function()
 	local Menu = R("Menu")
-	for _, tab in { "shop", "toys", "skills", "tether", "board", "settings", "help" } do
+	for _, tab in { "shop", "toys", "skills", "quests", "tether", "board", "settings", "help" } do
 		Menu.open(tab)
 		Menu.refresh()
 	end

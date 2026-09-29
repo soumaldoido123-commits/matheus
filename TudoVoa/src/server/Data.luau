@@ -44,6 +44,7 @@ local DEFAULT = {
 	Settings = { Peaceful = false, Music = true, Sfx = true, Shake = true, Tutorial = false },
 	LastSlot = 0,
 	Wins = 0,
+	Quests = { slots = {}, completed = 0 },
 }
 
 local profiles = {} -- [player] = { data, loaded, dirty, lastSave }
@@ -87,7 +88,7 @@ end
 
 local PUBLIC_KEYS = {
 	"Coins", "XP", "Level", "SkillPoints", "BestThrow", "TotalThrows", "TotalHits", "BossDamage",
-	"Upgrades", "Toys", "OwnedTethers", "OwnedTrails", "Tether", "Trail", "Settings", "Wins",
+	"Upgrades", "Toys", "OwnedTethers", "OwnedTrails", "Tether", "Trail", "Settings", "Wins", "Quests",
 }
 
 function Data.snapshot(player: Player)
@@ -323,6 +324,12 @@ local function load(player: Player)
 			end)
 			if ok then
 				data = result
+				break
+			end
+			if RunService:IsStudio() then
+				-- Studio sem "Enable Studio Access to API Services": nao adianta tentar de novo
+				canPersist = false
+				warn("[Data] DataStore indisponivel no Studio; jogando sem salvar. (" .. tostring(result) .. ")")
 				break
 			end
 			task.wait(attempt)

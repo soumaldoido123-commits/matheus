@@ -125,9 +125,49 @@ function DecorAnim.init()
 		CollectionService:GetInstanceRemovedSignal(tag):Connect(onUntagged)
 	end
 
+	-- luzes dos postes: acendem a noite
+	local Lighting = game:GetService("Lighting")
+	local lamps = {}
+	local function trackLamp(p)
+		if p:IsA("BasePart") then
+			table.insert(lamps, p)
+		end
+	end
+	for _, p in CollectionService:GetTagged("TV_Lamp") do
+		trackLamp(p)
+	end
+	CollectionService:GetInstanceAddedSignal("TV_Lamp"):Connect(trackLamp)
+	local lastNight = nil
+	local function updateLamps()
+		local t = Lighting.ClockTime
+		local night = t < 5.8 or t > 18.2
+		if night == lastNight then
+			return
+		end
+		lastNight = night
+		for i = #lamps, 1, -1 do
+			local p = lamps[i]
+			if not p.Parent then
+				table.remove(lamps, i)
+			else
+				p.Material = night and Enum.Material.Neon or Enum.Material.SmoothPlastic
+				local l = p:FindFirstChildWhichIsA("PointLight")
+				if l then
+					l.Enabled = night
+				end
+			end
+		end
+	end
+
 	local acc = 0
+	local accLamps = 0
 	RunService.RenderStepped:Connect(function(dt)
 		acc += dt
+		accLamps += dt
+		if accLamps > 2 then
+			accLamps = 0
+			updateLamps()
+		end
 		if acc > 0.4 then
 			acc = 0
 			refreshActive()

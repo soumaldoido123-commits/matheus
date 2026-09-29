@@ -14,6 +14,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Util = require(Shared:WaitForChild("Util"))
 local Toys = require(Shared:WaitForChild("Toys"))
 local AbilityDefs = require(Shared:WaitForChild("AbilityDefs"))
+local QuestDefs = require(Shared:WaitForChild("QuestDefs"))
 
 local Store = require(script.Parent.Parent:WaitForChild("Store"))
 local Audio = require(script.Parent.Parent:WaitForChild("Audio"))
@@ -34,6 +35,7 @@ local TABS = {
 	{ id = "shop", label = "🧸  Loja" },
 	{ id = "toys", label = "🎒  Meus Brinquedos" },
 	{ id = "skills", label = "⭐  Habilidades" },
+	{ id = "quests", label = "📋  Missões" },
 	{ id = "tether", label = "🔗  Cabo & Rastro" },
 	{ id = "board", label = "🏆  Recordes" },
 	{ id = "settings", label = "⚙️  Ajustes" },
@@ -238,6 +240,29 @@ buildTab.skills = function()
 			row.BackgroundTransparency = 0.5
 		end
 	end
+end
+
+-- Aba: Missoes ---------------------------------------------------------------------------------------------------------------------------------
+
+buildTab.quests = function()
+	useList(10)
+	local q = Store.get("Quests") or { slots = {}, completed = 0 }
+	header(string.format("Missões ativas  ·  %d concluídas", q.completed or 0), 1)
+	for i, s in q.slots do
+		local def = QuestDefs.ById[s.id]
+		if def then
+			local row = Theme.panel(content, { size = UDim2.new(1, -12, 0, 78) })
+			row.LayoutOrder = i + 1
+			Theme.text(row, { text = def.icon, size = 34, frame = UDim2.fromOffset(60, 78) })
+			Theme.text(row, { text = def.text, font = Theme.Title, size = 17, alignX = Enum.TextXAlignment.Left, wrap = true, frame = UDim2.new(1, -220, 0, 26), position = UDim2.fromOffset(64, 8) })
+			local bar = Theme.bar(row, { size = UDim2.new(1, -230, 0, 14), position = UDim2.fromOffset(66, 44), color = P.Green, gradient = P.Accent2, radius = 7 })
+			bar.set(s.progress / math.max(def.goal, 1), true)
+			Theme.text(row, { text = string.format("%s / %s", Util.formatNumber(s.progress), Util.formatNumber(def.goal)), size = 13, font = Theme.Bold, color = P.Muted, alignX = Enum.TextXAlignment.Left, frame = UDim2.fromOffset(120, 16), position = UDim2.fromOffset(66, 60) })
+			Theme.text(row, { text = string.format("🪙 %d   ✨ %d XP", def.coins, def.xp), size = 16, font = Theme.Title, color = P.Accent, alignX = Enum.TextXAlignment.Right, frame = UDim2.fromOffset(140, 30), position = UDim2.new(1, -150, 0.5, -15) })
+		end
+	end
+	local tip = Theme.text(content, { text = "Ao cumprir uma missão, outra aparece no lugar. Novas missões entram conforme você sobe de nível.", size = 14, color = P.Muted, wrap = true, frame = UDim2.new(1, -12, 0, 40) })
+	tip.LayoutOrder = 99
 end
 
 -- Aba: Cabo & Rastro ------------------------------------------------------------------------------------------------------------------------
@@ -446,6 +471,7 @@ function Menu.open(tab: string?)
 		currentTab = tab
 	end
 	isOpen = true
+	HUD.menuOpen = true
 	gui.Enabled = true
 	window.Position = UDim2.fromScale(0.5, 0.56)
 	Theme.tween(window, 0.22, { Position = UDim2.fromScale(0.5, 0.5) }, Enum.EasingStyle.Back)
@@ -459,6 +485,7 @@ function Menu.close()
 		return
 	end
 	isOpen = false
+	HUD.menuOpen = false
 	gui.Enabled = false
 end
 
@@ -530,7 +557,7 @@ function Menu.init()
 	Theme.padding(content, 4)
 
 	Store.Changed:Connect(function(key)
-		if isOpen and (key == "Coins" or key == "Toys" or key == "Level" or key == "SkillPoints" or key == "Upgrades" or key == "Tether" or key == "Trail" or key == "OwnedTethers" or key == "OwnedTrails") then
+		if isOpen and (key == "Coins" or key == "Toys" or key == "Level" or key == "SkillPoints" or key == "Upgrades" or key == "Tether" or key == "Trail" or key == "OwnedTethers" or key == "OwnedTrails" or key == "Quests") then
 			Menu.refresh()
 		end
 	end)

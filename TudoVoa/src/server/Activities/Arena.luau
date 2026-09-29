@@ -20,6 +20,7 @@ local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local WorldGen = require(Server:WaitForChild("World"):WaitForChild("WorldGen"))
 local Hub = require(Server:WaitForChild("World"):WaitForChild("Hub"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Physics = require(Server:WaitForChild("Physics"))
 local Ragdoll = require(Server:WaitForChild("Ragdoll"))
 
@@ -258,6 +259,7 @@ local function botStep()
 				local coins = (rec.kind == "boss" and 200) or (rec.kind == "tank" and 30) or 12
 				Data.addCoins(killer, coins, "derrubou " .. rec.def.name)
 				Data.addXP(killer, coins)
+				Quests.report(killer, "bot", 1)
 				Remotes.get("ScorePopup"):FireClient(killer, p.Position + Vector3.new(0, 10, 0), "+" .. coins .. " 🪙", P.Green)
 			end
 			removeBot(rec)

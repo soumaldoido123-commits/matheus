@@ -11,6 +11,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Data = require(script.Parent:WaitForChild("Data"))
 local Board = require(script.Parent:WaitForChild("Board"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Scoring = {}
 
@@ -50,6 +51,13 @@ function Scoring.throwLanded(player: Player, distance: number, bonus: number?, p
 	local xp = math.floor(distance * 0.28 * mult) + 4
 	local record = distance > (d.BestThrow or 0)
 	Data.addStat(player, "TotalThrows", 1)
+	Quests.report(player, "throw", 1)
+	if distance >= 150 then
+		Quests.report(player, "far", 1)
+	end
+	if distance >= 300 then
+		Quests.report(player, "far300", 1)
+	end
 	if record then
 		Data.set(player, "BestThrow", math.floor(distance))
 		Board.submit(player, distance)
@@ -104,6 +112,7 @@ function Scoring.hit(attacker: Player?, victimModel: Model, victimPlayer: Player
 		local count = combo(attacker)
 		local coins = math.floor(Config.Economy.HitCoins * (1 + 0.15 * (count - 1)))
 		Data.addStat(attacker, "TotalHits", 1)
+		Quests.report(attacker, "hit", 1)
 		Data.addCoins(attacker, coins)
 		Data.addXP(attacker, 8)
 		local root = victimModel:FindFirstChild("HumanoidRootPart")

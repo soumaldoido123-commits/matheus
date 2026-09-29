@@ -16,6 +16,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Targets = {}
 
@@ -45,6 +46,7 @@ local function award(player: Player, value: number, dist: number, pos: Vector3, 
 	Data.addCoins(player, coins)
 	Data.addXP(player, math.floor(points * 0.6))
 	Data.addStat(player, "TotalHits", 1)
+	Quests.report(player, "target", 1)
 	Remotes.get("ScorePopup"):FireClient(player, pos + Vector3.new(0, 3, 0), string.format("%s +%d", label, coins), value >= 60 and P.Accent or P.Green)
 end
 

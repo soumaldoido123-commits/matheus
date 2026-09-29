@@ -14,6 +14,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 local Pickups = require(Server:WaitForChild("Pickups"))
 
 local Bowling = {}
@@ -118,6 +119,7 @@ local function settle()
 		local label = knocked == #pins and "STRIKE!" or string.format("%d pinos", knocked)
 		Remotes.get("ScorePopup"):FireClient(player, center + Vector3.new(0, 6, 0), string.format("%s +%d", label, coins), knocked == #pins and P.Accent or P.Green)
 		if knocked == #pins then
+			Quests.report(player, "strike", 1)
 			Remotes.get("Announce"):FireClient(player, "STRIKE!", "Derrubou todos os pinos", 2, P.Accent)
 			Remotes.get("Fx"):FireAllClients("confetti", center, 1.3, nil)
 		end

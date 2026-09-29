@@ -26,6 +26,7 @@ local Data = require(script.Parent:WaitForChild("Data"))
 local Grab = require(script.Parent:WaitForChild("Grab"))
 local Physics = require(script.Parent:WaitForChild("Physics"))
 local Blasts = require(script.Parent:WaitForChild("Blasts"))
+local Quests = require(script.Parent:WaitForChild("Quests"))
 
 local Abilities = {}
 
@@ -306,6 +307,7 @@ local function handleUse(player: Player, id: any, arg: any)
 	end
 
 	if ok then
+		Quests.report(player, "ability", 1)
 		cds[id] = now + cooldownFor(player, def)
 	else
 		Remotes.get("AbilityFx"):FireClient(player, "fail", player.UserId, hrp.Position, id)

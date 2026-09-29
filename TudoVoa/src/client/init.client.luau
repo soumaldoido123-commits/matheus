@@ -2,6 +2,7 @@
 --[[
 	TUDO VOA! — Ilhas do Caos
 	Script principal do cliente: inicia a interface e todos os sistemas locais.
+	Cada modulo e carregado/iniciado de forma protegida: se um falhar, o resto do jogo continua.
 ]]
 
 local Players = game:GetService("Players")
@@ -22,49 +23,67 @@ pcall(function()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 end)
 
-local Store = require(script:WaitForChild("Store"))
-local Loading = require(script:WaitForChild("UI"):WaitForChild("Loading"))
-local HUD = require(script:WaitForChild("UI"):WaitForChild("HUD"))
-local Menu = require(script:WaitForChild("UI"):WaitForChild("Menu"))
-local Mobile = require(script:WaitForChild("UI"):WaitForChild("Mobile"))
-local Tutorial = require(script:WaitForChild("UI"):WaitForChild("Tutorial"))
-local Fx = require(script:WaitForChild("Fx"))
-local GrabController = require(script:WaitForChild("GrabController"))
-local Tether = require(script:WaitForChild("Tether"))
-local Pose = require(script:WaitForChild("Pose"))
-local ToyPhysics = require(script:WaitForChild("ToyPhysics"))
-local Movement = require(script:WaitForChild("Movement"))
-local DecorAnim = require(script:WaitForChild("DecorAnim"))
-local AbilityBar = require(script:WaitForChild("AbilityBar"))
+local function load(parent: Instance, name: string): any
+	local ok, mod = xpcall(function()
+		return require(parent:WaitForChild(name, 20))
+	end, debug.traceback)
+	if not ok then
+		warn("[Cliente] falha ao carregar '" .. name .. "':\n" .. tostring(mod))
+		return nil
+	end
+	return mod
+end
 
-Loading.init()
-Store.init()
-Fx.init()
-HUD.init()
-Menu.init()
-Tether.init()
-GrabController.init()
-Pose.init()
-ToyPhysics.init()
-Movement.init()
-DecorAnim.init()
-AbilityBar.init()
-Mobile.init()
+local function start(name: string, mod: any)
+	if mod and type(mod.init) == "function" then
+		local ok, err = xpcall(mod.init, debug.traceback)
+		if not ok then
+			warn("[Cliente] falha ao iniciar '" .. name .. "':\n" .. tostring(err))
+		end
+	end
+end
 
--- modulos de atividades do cliente (chefao, arena, eventos...) sao opcionais
+local UI = script:WaitForChild("UI")
+local Store = load(script, "Store")
+local Loading = load(UI, "Loading")
+local HUD = load(UI, "HUD")
+local Menu = load(UI, "Menu")
+local Mobile = load(UI, "Mobile")
+local Tutorial = load(UI, "Tutorial")
+local QuestPanel = load(UI, "QuestPanel")
+local Fx = load(script, "Fx")
+local GrabController = load(script, "GrabController")
+local Tether = load(script, "Tether")
+local Pose = load(script, "Pose")
+local ToyPhysics = load(script, "ToyPhysics")
+local Movement = load(script, "Movement")
+local DecorAnim = load(script, "DecorAnim")
+local AbilityBar = load(script, "AbilityBar")
+local Ambient = load(script, "Ambient")
+
+-- ordem importa: carregamento e dados primeiro
+start("Loading", Loading)
+start("Store", Store)
+start("Fx", Fx)
+start("HUD", HUD)
+start("Menu", Menu)
+start("QuestPanel", QuestPanel)
+start("Tether", Tether)
+start("GrabController", GrabController)
+start("Pose", Pose)
+start("ToyPhysics", ToyPhysics)
+start("Movement", Movement)
+start("DecorAnim", DecorAnim)
+start("AbilityBar", AbilityBar)
+start("Ambient", Ambient)
+start("Mobile", Mobile)
+
+-- modulos de atividades do cliente (chefao, arena, eventos...)
 local Activities = script:FindFirstChild("Activities")
 if Activities then
 	for _, mod in Activities:GetChildren() do
 		if mod:IsA("ModuleScript") then
-			local ok, res = pcall(require, mod)
-			if ok and type(res) == "table" and res.init then
-				local okInit, err = pcall(res.init)
-				if not okInit then
-					warn("[Cliente] atividade falhou ao iniciar", mod.Name, err)
-				end
-			elseif not ok then
-				warn("[Cliente] atividade falhou ao carregar", mod.Name, res)
-			end
+			start(mod.Name, load(Activities, mod.Name))
 		end
 	end
 end
@@ -72,7 +91,7 @@ end
 -- interacoes por tecla E (ProximityPrompt)
 ProximityPromptService.PromptTriggered:Connect(function(prompt)
 	local id = prompt:GetAttribute("Id")
-	if id == "shop" then
+	if id == "shop" and Menu then
 		Menu.open("shop")
 	end
 end)
@@ -84,11 +103,13 @@ task.spawn(function()
 		local worldReady = workspace:GetAttribute("TV_WorldReady") == true
 		local char = player.Character
 		local hasChar = char and char:FindFirstChild("HumanoidRootPart") ~= nil
-		if worldReady and hasChar and (Store.loaded or os.clock() - t0 > 20) then
+		if worldReady and hasChar and ((Store and Store.loaded) or os.clock() - t0 > 20) then
 			break
 		end
 		task.wait(0.2)
 	end
-	Loading.finish()
-	Tutorial.init()
+	if Loading then
+		Loading.finish()
+	end
+	start("Tutorial", Tutorial)
 end)

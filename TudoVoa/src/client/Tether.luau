@@ -102,7 +102,17 @@ local function makeBeam(char: Model, ov: ObjectValue)
 	sparks.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
 	sparks.Parent = a1
 
-	local rec = { beam = beam, core = core, a0 = a0, own0 = own0, a1 = a1, sparks = sparks, char = char, player = player, rainbow = rainbow, key = key, ov = ov, t0 = os.clock() }
+	-- contorno colorido no objeto/pessoa segurado
+	local hl = Instance.new("Highlight")
+	hl.Name = "TV_HeldOutline"
+	hl.Adornee = (key.Parent and key.Parent:IsA("Model") and key.Parent) or key
+	hl.FillTransparency = 1
+	hl.OutlineColor = color
+	hl.OutlineTransparency = 0.15
+	hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	hl.Parent = key
+
+	local rec = { beam = beam, core = core, a0 = a0, own0 = own0, a1 = a1, sparks = sparks, hl = hl, char = char, player = player, rainbow = rainbow, key = key, ov = ov, t0 = os.clock() }
 	table.insert(beams, rec)
 	local list = Tether.active[char]
 	if not list then
@@ -128,7 +138,7 @@ local function destroyBeam(rec)
 			Tether.active[rec.char] = nil
 		end
 	end
-	for _, o in { rec.beam, rec.core, rec.a1, rec.sparks } do
+	for _, o in { rec.beam, rec.core, rec.a1, rec.sparks, rec.hl } do
 		if o and o.Parent then
 			o:Destroy()
 		end
@@ -207,6 +217,7 @@ function Tether.init()
 					local c1 = Util.hue(t * 0.4 + 0.3, 0.75, 1)
 					rec.beam.Color = ColorSequence.new(c0, c1)
 					rec.sparks.Color = ColorSequence.new(c0, c1)
+					rec.hl.OutlineColor = c0
 				end
 			end
 		end

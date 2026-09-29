@@ -14,6 +14,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 local Server = script.Parent.Parent
 local Build = require(Server:WaitForChild("World"):WaitForChild("Build"))
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Hoops = {}
 
@@ -76,6 +77,7 @@ local function makeHoop(folder: Folder, x: number, z: number, height: number, po
 			return
 		end
 		local coins = points
+		Quests.report(player, "hoop", 1)
 		Data.addCoins(player, coins)
 		Data.addXP(player, points * 2)
 		Remotes.get("ScorePopup"):FireClient(player, ringCenter + Vector3.new(0, 4, 0), string.format("CESTA! +%d", coins), P.Accent)

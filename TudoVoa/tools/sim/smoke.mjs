@@ -85,7 +85,7 @@ try("Scenery.build (sem escrita de terreno)", function()
 	Scenery.build()
 end)
 
-for _, modName in { "Data", "Physics", "Ragdoll", "Scoring", "Board", "Blasts", "Pickups", "ToyPassive", "ToySpawner", "Grab", "AbilityService", "Shop", "Zones", "Atmosphere" } do
+for _, modName in { "Data", "Physics", "Ragdoll", "Scoring", "Board", "Blasts", "Pickups", "ToyPassive", "ToySpawner", "Grab", "AbilityService", "Shop", "Zones", "Quests", "Atmosphere" } do
 	try("init " .. modName, function()
 		R(modName).init()
 	end)
@@ -123,6 +123,20 @@ try("jogador falso entra e carrega dados", function()
 	Data.addXP(player, 500)
 	assert(Data.get(player).Level > 1, "nao subiu de nivel")
 	Data.addCoins(player, 100)
+end)
+
+try("missoes: progresso e recompensa", function()
+	local Quests = R("Quests")
+	local Data = R("Data")
+	local d = Data.get(player)
+	assert(d.Quests and #d.Quests.slots == 3, "esperava 3 missoes, tem " .. tostring(d.Quests and #d.Quests.slots))
+	local coinsBefore = d.Coins
+	local first = d.Quests.slots[1]
+	local def = R("QuestDefs").ById[first.id]
+	Quests.report(player, def.kind, def.goal)
+	assert(d.Coins > coinsBefore, "nao pagou a recompensa")
+	assert(#d.Quests.slots == 3, "nao repos a missao")
+	assert(d.Quests.completed == 1)
 end)
 
 try("upgrade + compra na loja", function()

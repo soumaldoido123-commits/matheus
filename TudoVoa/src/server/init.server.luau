@@ -24,36 +24,58 @@ workspace:SetAttribute("TV_LoadText", "Iniciando...")
 -- 1) remotes primeiro (todo o resto usa)
 Remotes.init()
 
--- 2) sistemas base
-local Data = require(script:WaitForChild("Data"))
-local Physics = require(script:WaitForChild("Physics"))
-local Ragdoll = require(script:WaitForChild("Ragdoll"))
-local Scoring = require(script:WaitForChild("Scoring"))
-local Board = require(script:WaitForChild("Board"))
-local Blasts = require(script:WaitForChild("Blasts"))
-local Pickups = require(script:WaitForChild("Pickups"))
-local ToyPassive = require(script:WaitForChild("ToyPassive"))
-local ToySpawner = require(script:WaitForChild("ToySpawner"))
-local Grab = require(script:WaitForChild("Grab"))
-local AbilityService = require(script:WaitForChild("AbilityService"))
-local Shop = require(script:WaitForChild("Shop"))
-local Zones = require(script:WaitForChild("Zones"))
-local Atmosphere = require(script:WaitForChild("Atmosphere"))
+-- 2) sistemas base (cada um carregado/iniciado de forma protegida: um erro nao derruba o jogo todo)
+local function load(name: string): any
+	local ok, mod = xpcall(function()
+		return require(script:WaitForChild(name, 20))
+	end, debug.traceback)
+	if not ok then
+		warn("[Servidor] falha ao carregar '" .. name .. "':\n" .. tostring(mod))
+		return nil
+	end
+	return mod
+end
 
-Atmosphere.init()
-Data.init()
-Physics.init()
-Ragdoll.init()
-Scoring.init()
-Board.init()
-Blasts.init()
-Pickups.init()
-ToyPassive.init()
-ToySpawner.init()
-Grab.init()
-AbilityService.init()
-Shop.init()
-Zones.init()
+local function start(name: string, mod: any)
+	if mod and type(mod.init) == "function" then
+		local ok, err = xpcall(mod.init, debug.traceback)
+		if not ok then
+			warn("[Servidor] falha ao iniciar '" .. name .. "':\n" .. tostring(err))
+		end
+	end
+end
+
+local Data = load("Data")
+local Physics = load("Physics")
+local Ragdoll = load("Ragdoll")
+local Scoring = load("Scoring")
+local Board = load("Board")
+local Blasts = load("Blasts")
+local Pickups = load("Pickups")
+local ToyPassive = load("ToyPassive")
+local ToySpawner = load("ToySpawner")
+local Grab = load("Grab")
+local AbilityService = load("AbilityService")
+local Shop = load("Shop")
+local Zones = load("Zones")
+local Quests = load("Quests")
+local Atmosphere = load("Atmosphere")
+
+start("Atmosphere", Atmosphere)
+start("Data", Data)
+start("Physics", Physics)
+start("Ragdoll", Ragdoll)
+start("Scoring", Scoring)
+start("Board", Board)
+start("Blasts", Blasts)
+start("Pickups", Pickups)
+start("ToyPassive", ToyPassive)
+start("ToySpawner", ToySpawner)
+start("Grab", Grab)
+start("AbilityService", AbilityService)
+start("Shop", Shop)
+start("Zones", Zones)
+start("Quests", Quests)
 
 -- 3) jogadores: espera o mundo + dados e so entao cria o personagem
 local function spawnPlayer(player: Player)
@@ -61,7 +83,7 @@ local function spawnPlayer(player: Player)
 	while not workspace:GetAttribute("TV_WorldReady") and player.Parent do
 		task.wait(0.25)
 	end
-	while not Data.isLoaded(player) and os.clock() - t0 < 30 and player.Parent do
+	while Data and not Data.isLoaded(player) and os.clock() - t0 < 30 and player.Parent do
 		task.wait(0.2)
 	end
 	if player.Parent then

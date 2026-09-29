@@ -12,6 +12,7 @@ local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Server = script.Parent.Parent
 local Data = require(Server:WaitForChild("Data"))
+local Quests = require(Server:WaitForChild("Quests"))
 
 local Extras = {}
 
@@ -38,6 +39,7 @@ function handlers.boomerang(player, action, part)
 		end
 	end)
 	if Data.isLoaded(player) then
+		Quests.report(player, "boomerang", 1)
 		Data.addCoins(player, 15, "pegou o bumerangue")
 		Data.addXP(player, 10)
 		Remotes.get("ScorePopup"):FireClient(player, part.Position + Vector3.new(0, 3, 0), "PEGOU! +15", Config.Palette.Accent)
