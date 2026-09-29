@@ -43,6 +43,7 @@ Config.World = {
 	SkyY = 380, -- altura das ilhas flutuantes
 	KillY = -140, -- abaixo disso o jogador "cai do mundo"
 	SpawnOffset = Vector3.new(0, 0, 0),
+	Village = Vector3.new(160, 0, 160), -- centro da Vila dos Jogadores (terreno plano, longe dos biomas)
 }
 
 -- Regioes nomeadas (usadas para mostrar "voce entrou em..." e distribuir brinquedos)

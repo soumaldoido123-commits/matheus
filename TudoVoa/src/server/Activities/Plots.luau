@@ -144,8 +144,8 @@ end
 
 function Plots.init()
 	local folder = Build.folder("Plots")
-	-- vila a nordeste da praca, em arco, todas viradas para o centro da vila
-	local villageCenter = Vector3.new(170, 0, -175)
+	-- vila a sudeste da praca, em arco, todas viradas para o centro da vila
+	local villageCenter = Config.World.Village
 	local n = 8
 	for i = 1, n do
 		local a = (i - 0.5) / n * math.pi * 1.5 + math.pi * 0.85

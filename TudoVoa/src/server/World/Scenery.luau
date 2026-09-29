@@ -82,6 +82,8 @@ function Scenery.build()
 	end
 
 	setProgress(0.58, "Construindo a praça...")
+	-- a Vila dos Jogadores (Activities/Plots) ocupa este raio: nada de arvores/pedras nascendo la
+	Nature.reserve(Config.World.Village.X, Config.World.Village.Z, 120)
 	stage("praca", Hub.build)
 	task.wait()
 	setProgress(0.64, "Plantando a fazenda...")
