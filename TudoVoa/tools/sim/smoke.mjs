@@ -91,6 +91,12 @@ for _, modName in { "Data", "Physics", "Ragdoll", "Scoring", "Board", "Blasts", 
 	end)
 end
 
+for _, modName in { "Targets", "Hoops", "Bowling", "Arena", "Boss", "Events", "Extras" } do
+	try("atividade " .. modName, function()
+		R(modName).init()
+	end)
+end
+
 -- jogador falso ---------------------------------------------------------------------------------------------
 local player, char, hrp
 try("jogador falso entra e carrega dados", function()
@@ -109,6 +115,7 @@ try("jogador falso entra e carrega dados", function()
 	hum.Parent = char
 	char.Parent = workspace
 	player.Character = char
+	player.Parent = game:GetService("Players")
 	game:GetService("Players").PlayerAdded:Fire(player)
 	local Data = R("Data")
 	assert(Data.isLoaded(player), "dados nao carregaram")
@@ -147,6 +154,27 @@ try("agarrar e arremessar um objeto", function()
 	assert(#Grab.holdsOf(player) == 0, "hold deveria ter terminado")
 	assert(body:GetAttribute("Thrower") == 42)
 	_ = Toys
+end)
+
+try("chefao: invocar, animar e causar dano", function()
+	local Boss = R("Boss")
+	Boss.summon()
+	local rs = game:GetService("RunService")
+	for _ = 1, 40 do
+		rs.Heartbeat:Fire(0.05)
+	end
+end)
+
+try("eventos do mundo", function()
+	local Events = R("Events")
+	Events.trigger("meteors")
+end)
+
+try("arena: quadros", function()
+	local rs = game:GetService("RunService")
+	for _ = 1, 20 do
+		rs.Heartbeat:Fire(0.2)
+	end
 end)
 
 try("habilidade shock/dash/stasis", function()

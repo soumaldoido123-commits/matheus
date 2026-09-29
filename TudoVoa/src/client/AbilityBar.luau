@@ -41,7 +41,7 @@ local function buildSlot(def, order: number)
 	local f = Theme.new("TextButton", {
 		Name = "Slot_" .. def.id,
 		Size = UDim2.fromOffset(68, 68),
-		BackgroundColor3 = P.Panel,
+		BackgroundColor3 = Color3.new(1, 1, 1),
 		BackgroundTransparency = 0.1,
 		AutoButtonColor = false,
 		Text = "",
@@ -320,10 +320,11 @@ function AbilityBar.init()
 			elseif s.cdFill.Size.Y.Scale > 0 then
 				s.cdFill.Size = UDim2.fromScale(1, 0)
 				s.cdText.Text = ""
-				Theme.tween(s.frame, 0.12, { BackgroundColor3 = P.PanelLight })
-				task.delay(0.15, function()
-					Theme.tween(s.frame, 0.2, { BackgroundColor3 = P.Panel })
-				end)
+				local st = s.frame:FindFirstChildOfClass("UIStroke")
+				if st then
+					st.Transparency = 0
+					Theme.tween(st, 0.4, { Transparency = 0.7 })
+				end
 			end
 		end
 		for _, p in Players:GetPlayers() do

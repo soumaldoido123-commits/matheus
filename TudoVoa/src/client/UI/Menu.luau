@@ -25,7 +25,7 @@ local Menu = {}
 local P = Theme.P
 local player = Players.LocalPlayer
 
-local gui, window, content, tabButtons, titleLabel, walletLabel
+local gui, window, content, tabButtons, walletLabel
 local currentTab = "shop"
 local isOpen = false
 local buildTab = {}
@@ -489,7 +489,7 @@ function Menu.init()
 	rescale()
 	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(rescale)
 
-	titleLabel = Theme.text(window, { text = Config.GameName .. "  —  MENU", font = Theme.Title, size = 28, color = P.Accent, alignX = Enum.TextXAlignment.Left, frame = UDim2.new(0, 400, 0, 44), position = UDim2.fromOffset(24, 10) })
+	Theme.text(window, { text = Config.GameName .. "  —  MENU", font = Theme.Title, size = 28, color = P.Accent, alignX = Enum.TextXAlignment.Left, frame = UDim2.new(0, 400, 0, 44), position = UDim2.fromOffset(24, 10) })
 	walletLabel = Theme.text(window, { text = "", font = Theme.Title, size = 22, color = P.White, alignX = Enum.TextXAlignment.Right, frame = UDim2.new(0, 360, 0, 44), position = UDim2.new(1, -90, 0, 10) })
 	Theme.button(window, { text = "✕", size = UDim2.fromOffset(42, 42), position = UDim2.new(1, -18, 0, 12), anchor = Vector2.new(1, 0), color = P.Red, textColor = P.White, textSize = 22, onClick = Menu.close })
 

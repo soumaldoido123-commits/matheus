@@ -200,6 +200,18 @@ local function hookCharacter(player: Player, character: Model)
 	end)
 end
 
+-- Cria o personagem (LoadCharacter esta obsoleto; usa a versao nova quando existe)
+function Physics.loadCharacter(player: Player)
+	local ok = pcall(function()
+		player:LoadCharacterAsync()
+	end)
+	if not ok then
+		pcall(function()
+			player:LoadCharacter()
+		end)
+	end
+end
+
 function Physics.init()
 	registerGroup(GROUP_PLAYERS)
 	registerGroup(GROUP_HELD)

@@ -46,7 +46,7 @@ function Loading.init()
 		DisplayOrder = 100,
 		Parent = player:WaitForChild("PlayerGui"),
 	})
-	local bg = Theme.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = P.Ink, BorderSizePixel = 0, Parent = gui, Name = "Bg" })
+	local bg = Theme.new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, Parent = gui, Name = "Bg" })
 	Theme.gradient(bg, Color3.fromRGB(38, 28, 90), Color3.fromRGB(10, 12, 32), 90)
 
 	-- estrelas

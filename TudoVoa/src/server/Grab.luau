@@ -397,6 +397,8 @@ local function doThrow(player: Player, key: any, dir: any, charge: any)
 
 	key:SetAttribute("Thrower", player.UserId)
 	key:SetAttribute("ThrowClock", workspace:GetServerTimeNow())
+	key:SetAttribute("LastThrower", player.UserId)
+	key:SetAttribute("LastThrowT", os.clock())
 	if player.Character then
 		player.Character:SetAttribute("ThrowT", workspace:GetServerTimeNow())
 	end

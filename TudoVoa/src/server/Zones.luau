@@ -12,7 +12,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 
 local Data = require(script.Parent:WaitForChild("Data"))
-local Scoring = require(script.Parent:WaitForChild("Scoring"))
+local Physics = require(script.Parent:WaitForChild("Physics"))
 
 local Zones = {}
 
@@ -67,12 +67,7 @@ end
 local function respawn(player: Player)
 	task.wait(3)
 	if player.Parent then
-		local ok, err = pcall(function()
-			player:LoadCharacter()
-		end)
-		if not ok then
-			warn("[Zones] LoadCharacter falhou:", err)
-		end
+		Physics.loadCharacter(player)
 	end
 end
 
@@ -134,7 +129,6 @@ function Zones.init()
 	Players.PlayerRemoving:Connect(function(p)
 		last[p] = nil
 	end)
-	_ = Scoring
 end
 
 return Zones

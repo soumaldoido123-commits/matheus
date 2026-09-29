@@ -33,7 +33,7 @@ end
 
 -- Empurra tudo em volta de um ponto.
 -- power: velocidade final (studs/s) no centro; falloff linear ate o raio.
--- opts: { credit = Player?, knock = seg?, skip = Model?, fx = "explosion"|"shock"|nil, lift = number? }
+-- opts: { credit = Player?, knock = seg?, skip = Model?, fx = "explosion"|"shock"|false, lift = number?, noCharacters = bool? }
 function Blasts.push(position: Vector3, radius: number, power: number, opts: { [string]: any }?)
 	opts = opts or {}
 	local credit: Player? = opts.credit
@@ -49,6 +49,9 @@ function Blasts.push(position: Vector3, radius: number, power: number, opts: { [
 			continue
 		end
 		local model, player = Physics.characterOf(part)
+		if model and opts.noCharacters then
+			continue
+		end
 		if model then
 			if seen[model] or model == opts.skip then
 				continue

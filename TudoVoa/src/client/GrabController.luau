@@ -47,7 +47,6 @@ local hoverHit = nil
 local lastGrabAttempt = 0
 local usingCenterAim = false
 local wheelBound = false
-local chargeSoundPitch = 0.6
 
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -159,10 +158,6 @@ local function resolveTarget(part: BasePart)
 		m = nil
 	end
 	return root, m, false
-end
-
-local function maxMassKnown(): number
-	return Config.Grab.MaxMassBase + Config.Grab.MaxMassPerLevel * Store.upgrade("Strength")
 end
 
 -- Constraints de segurar ----------------------------------------------------------------------------------------------------
@@ -473,7 +468,6 @@ local function beginCharge()
 	end
 	GrabController.charging = true
 	GrabController.charge = 0
-	chargeSoundPitch = 0.6
 	GrabController.Changed:Fire("chargeStart")
 end
 

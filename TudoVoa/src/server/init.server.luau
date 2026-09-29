@@ -65,7 +65,7 @@ local function spawnPlayer(player: Player)
 		task.wait(0.2)
 	end
 	if player.Parent then
-		player:LoadCharacter()
+		Physics.loadCharacter(player)
 	end
 end
 

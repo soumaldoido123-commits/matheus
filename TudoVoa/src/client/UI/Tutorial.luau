@@ -16,7 +16,6 @@ local HUD = require(script.Parent:WaitForChild("HUD"))
 
 local Tutorial = {}
 
-local P = Theme.P
 local player = Players.LocalPlayer
 local panel, label
 local step = 0

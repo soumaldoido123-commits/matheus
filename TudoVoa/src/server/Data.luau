@@ -22,6 +22,7 @@ local Data = {}
 Data.Loaded = Util.Signal.new() -- (player)
 Data.LevelUp = Util.Signal.new() -- (player, novoNivel)
 Data.Changed = Util.Signal.new() -- (player, chave, valor)
+Data.multiplier = 1 -- multiplicador global de moedas (evento "Hora do Ouro")
 
 local DEFAULT = {
 	Version = 1,
@@ -176,6 +177,9 @@ function Data.addCoins(player: Player, amount: number, reason: string?): number
 		return 0
 	end
 	amount = math.floor(amount)
+	if amount > 0 and Data.multiplier ~= 1 then
+		amount = math.floor(amount * Data.multiplier)
+	end
 	prof.data.Coins = math.max(0, prof.data.Coins + amount)
 	push(player, "Coins")
 	if amount > 0 then

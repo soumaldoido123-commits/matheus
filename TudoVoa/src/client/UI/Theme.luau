@@ -77,8 +77,9 @@ end
 -- Painel padrao (fundo azul-noite com gradiente e borda suave)
 function Theme.panel(parent: Instance, props: { [string]: any }?): Frame
 	props = props or {}
+	local useGradient = props.gradient ~= false
 	local f = Theme.new("Frame", {
-		BackgroundColor3 = props.color or P.Panel,
+		BackgroundColor3 = useGradient and Color3.new(1, 1, 1) or (props.color or P.Panel),
 		BackgroundTransparency = props.transparency or 0.08,
 		Size = props.size or UDim2.fromOffset(200, 100),
 		Position = props.position or UDim2.new(),
@@ -91,8 +92,9 @@ function Theme.panel(parent: Instance, props: { [string]: any }?): Frame
 	})
 	Theme.corner(f, props.radius or 14)
 	Theme.stroke(f, props.strokeColor or P.White, 2, props.strokeTransparency or 0.82)
-	if props.gradient ~= false then
-		Theme.gradient(f, props.color or P.PanelLight, props.color2 or P.Ink, 90)
+	if useGradient then
+		-- o UIGradient multiplica a cor de fundo: por isso o fundo e branco e o gradiente da a cor
+		Theme.gradient(f, props.color and props.color:Lerp(Color3.new(1, 1, 1), 0.06) or P.PanelLight, props.color2 or P.Ink, 90)
 	end
 	return f
 end
@@ -161,7 +163,7 @@ function Theme.button(parent: Instance, props: { [string]: any }): TextButton
 	return b
 end
 
-function Theme.tween(inst: Instance, time: number, goal: { [string]: any }, style: Enum.EasingStyle?, dir: Enum.EasingDirection?): Tween
+function Theme.tween(inst: Instance, time: number, goal: { [string]: any }, style: any?, dir: any?): Tween
 	local t = TweenService:Create(inst, TweenInfo.new(time, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out), goal)
 	t:Play()
 	return t
@@ -181,7 +183,7 @@ function Theme.bar(parent: Instance, props: { [string]: any }): any
 	})
 	Theme.corner(frame, props.radius or 8)
 	local fill = Theme.new("Frame", {
-		BackgroundColor3 = props.color or P.Accent,
+		BackgroundColor3 = props.gradient and Color3.new(1, 1, 1) or (props.color or P.Accent),
 		Size = UDim2.fromScale(0, 1),
 		Name = "Fill",
 		Parent = frame,

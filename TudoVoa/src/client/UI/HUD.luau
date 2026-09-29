@@ -10,7 +10,6 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Config = require(Shared:WaitForChild("Config"))
 local Remotes = require(Shared:WaitForChild("Remotes"))
 local Util = require(Shared:WaitForChild("Util"))
 
@@ -25,7 +24,7 @@ local player = Players.LocalPlayer
 
 local gui: ScreenGui
 local scaleObj: UIScale
-local card, levelLabel, xpBar, xpLabel, coinLabel, coinScale, pointsLabel, nameLabel
+local card, levelLabel, xpBar, xpLabel, coinLabel, coinScale, pointsLabel
 local crosshair, crossDot, crossRing, chargeFrame, chargeBar, chargeLabel, hintLabel
 local zoneFrame, zoneLabel
 local toastList
@@ -33,7 +32,6 @@ local announceFrame, announceTitle, announceSub
 local resultCard, resultDist, resultInfo, resultCombo
 local struggleFrame, struggleBar, struggleTitle
 local chipPeace, chipSafe
-local menuButton
 
 HUD.gui = nil
 HUD.abilityBar = nil
@@ -291,13 +289,13 @@ local function build()
 
 	-- cartao do jogador
 	card = Theme.panel(gui, { size = UDim2.fromOffset(330, 104), position = UDim2.fromOffset(16, 16), name = "PlayerCard" })
-	local badge = Theme.new("Frame", { Size = UDim2.fromOffset(74, 74), Position = UDim2.fromOffset(14, 15), BackgroundColor3 = P.Accent, Parent = card, Name = "Badge" })
+	local badge = Theme.new("Frame", { Size = UDim2.fromOffset(74, 74), Position = UDim2.fromOffset(14, 15), BackgroundColor3 = Color3.new(1, 1, 1), Parent = card, Name = "Badge" })
 	Theme.corner(badge, 37)
 	Theme.gradient(badge, Color3.fromRGB(255, 226, 120), Color3.fromRGB(255, 150, 40), 90)
 	Theme.stroke(badge, Color3.new(1, 1, 1), 3, 0.3)
 	levelLabel = Theme.text(badge, { text = "1", font = Theme.Title, size = 38, color = P.Ink, stroke = 1 })
 	Theme.text(card, { text = "NÍVEL", size = 10, font = Theme.Bold, color = P.Muted, frame = UDim2.fromOffset(74, 12), position = UDim2.fromOffset(14, 91) }).ZIndex = 2
-	nameLabel = Theme.text(card, {
+	Theme.text(card, {
 		text = player.DisplayName,
 		font = Theme.Title,
 		size = 18,
@@ -403,7 +401,7 @@ local function build()
 	chipSafe = chip("🛡️ Zona Segura", P.Blue)
 
 	-- botao de menu
-	menuButton = Theme.button(gui, {
+	Theme.button(gui, {
 		text = "☰  MENU  [M]",
 		size = UDim2.fromOffset(150, 40),
 		position = UDim2.new(1, -16, 1, -16),
