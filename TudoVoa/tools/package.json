@@ -1,0 +1,14 @@
+{
+  "name": "tudovoa-tools",
+  "private": true,
+  "type": "module",
+  "description": "Ferramentas de validacao (analisador Luau em WASM + StyLua) do projeto Tudo Voa!",
+  "scripts": {
+    "check": "node check.mjs",
+    "format": "stylua ../src"
+  },
+  "devDependencies": {
+    "@johnnymorganz/stylua-bin": "^2.5.2",
+    "@luau-rs/luau": "^0.739.0"
+  }
+}
