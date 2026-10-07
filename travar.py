@@ -1,6 +1,11 @@
 """Deixa um video de IA com timing de animacao desenhada a mao.
 
-Uso:  python3 travar.py entrada.mp4 saida.mp4
+Uso:  python3 travar.py entrada.mp4 saida.mp4 [--trava N] [--lento N]
+
+--trava N  quadros que a pose trava no fim de um movimento (padrao 6, o do
+           travar.py original). Use o maior hold da referencia x fps.
+--lento N  quadros por desenho no movimento lento (padrao 3). Use 2 para
+           sakuga em 1 e 2 (tipo A), que nunca chega a 3.
 
 O que faz, quadro a quadro:
 - movimento rapido  -> desenho novo a cada quadro (mantem smears e impactos)
@@ -11,9 +16,9 @@ O que faz, quadro a quadro:
   video nunca atrasa nem perde a sincronia.
 A duracao do video nao muda.
 """
+import argparse
 import json
 import subprocess
-import sys
 
 import numpy as np
 
@@ -39,7 +44,7 @@ def ler_quadros(path, w, h):
     return np.frombuffer(raw, np.uint8).reshape(-1, h, w, 3)
 
 
-def main(entrada, saida):
+def main(entrada, saida, trava=TRAVA_QUADROS, lento=3):
     w, h, fps = info(entrada)
     q = ler_quadros(entrada, w, h)
     n = len(q)
@@ -57,13 +62,13 @@ def main(entrada, saida):
             0 < i < n - 1 and rel[i - 1] > LIMIAR_RAPIDO * 0.8
             and rel[i] < rel[i - 1] * 0.6)
         if fim_de_movimento:
-            seg = TRAVA_QUADROS
+            seg = trava
         elif rel[i] >= LIMIAR_RAPIDO:
             seg = 1
         elif rel[i] >= LIMIAR_LENTO:
             seg = 2
         else:
-            seg = 3
+            seg = lento
         seg = min(seg, n - i)
         saida_idx += [i] * seg
         i += seg
@@ -85,6 +90,10 @@ def main(entrada, saida):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        sys.exit("uso: python3 travar.py entrada.mp4 saida.mp4")
-    main(sys.argv[1], sys.argv[2])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("entrada")
+    ap.add_argument("saida")
+    ap.add_argument("--trava", type=int, default=TRAVA_QUADROS)
+    ap.add_argument("--lento", type=int, default=3)
+    a = ap.parse_args()
+    main(a.entrada, a.saida, a.trava, a.lento)
