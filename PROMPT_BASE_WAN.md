@@ -1,3 +1,33 @@
+# ATUALIZAÇÃO: o melhor prompt de todos (W7, testado pelo usuário)
+
+O prompt da birra (`wan_tools/prompts/w7_birra.txt`, 333 palavras) foi o melhor resultado até agora. Ele **derruba três regras deste documento**:
+
+1. **O teto de ~285 palavras estava errado.** O W7 tem 333 e funcionou melhor que todos.
+2. **"Técnicas não funcionam por prompt" estava errado** quando elas são escritas como **regras gerais** ("nos movimentos rápidos, desenhe..."), e não como eventos com hora marcada.
+3. **"Nunca descrever um estado final" era rígido demais.** O W7 termina numa pose final, mas com uma parte do corpo num movimento que se repete ("os ombros soluçando"). Uma pose final viva funciona.
+
+**Por que o W7 funciona:**
+
+- **Muitas emoções em sequência (7), cada uma com um gesto.** O modelo nunca chega a "resolver" a cena, porque sempre há uma próxima emoção. É o motor que nunca se resolve, feito por emoções em vez de um objetivo.
+- **As técnicas são regras que valem o vídeo inteiro.** O modelo aplica cada uma onde fizer sentido, sem perder a liberdade que o W1 dá.
+- **Ele dá ao modelo uma forma de "segurar" sem parar:** "nas poses paradas o corpo treme indo para um desenho quase igual e voltando". É o moving hold, escrito como desenho.
+- **Ele diz o que fazer nos momentos lentos:** ciclos com poucos desenhos embaralhados. Antes, o modelo preenchia esses trechos com câmera lenta.
+- **O W1 continua inteiro**, no começo e no fim.
+
+**Daqui para frente, o W7 é a base principal.** O molde está em `wan_tools/prompts/w7_molde.txt`. Para uma cena nova, troque só:
+
+| Slot | O que pôr |
+|---|---|
+| [SITUAÇÃO] | O que acontece, numa frase ("tem um ataque de birra", "viu uma barata") |
+| [EMOÇÃO + GESTO] | 5 a 7 emoções, cada uma com um gesto visível ("choro esfregando os olhos") |
+| [ÚLTIMA POSE] + [MOVIMENTO QUE SE REPETE] | A pose final com uma parte do corpo ainda em movimento ("com os ombros soluçando") |
+| [CICLO 1] e [CICLO 2] | Os dois gestos repetitivos da cena (esfregar os olhos, soluçar) |
+| [LENTOS] | Como são os momentos calmos da cena ("tristes", "tímidos") |
+
+O bloco de técnicas fica igual. O documento abaixo continua valendo para o diagnóstico, as ferramentas e a pós-produção.
+
+---
+
 # Prompt-base definitivo para o Wan 3.0: cópia de animação desenhada à mão
 
 **Resumo para ler primeiro:**
